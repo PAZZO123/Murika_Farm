@@ -1,0 +1,151 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
+const config = require('../config/config');
+
+// Insert Admin User
+exports.insertAdminUser = async () => {
+  try {
+    const adminExists = await User.findOne({ role: 'admin' });
+    if (!adminExists) {
+      const hashedPassword = await bcrypt.hash('password', 10);
+      const newAdmin = new User({
+        firstName: 'Admin',
+        lastName: 'User',
+        username: 'admin',
+        email: 'admin@example.com',
+        phone: '123456789',
+        password: hashedPassword,
+        role: 'admin',
+      });
+      await newAdmin.save();
+      console.log('Admin user created successfully');
+    } else {
+      console.log('Admin user already exists');
+    }
+  } catch (error) {
+    console.error('Error inserting admin user:', error.message);
+  }
+};
+
+// User Signup
+exports.signUp = async (req, res) => {
+  try {
+    const { password, role } = req.body;
+
+    if (role && role.toLowerCase() === 'employee') {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = new User({
+        ...req.body,
+        password: hashedPassword,
+      });
+      await newUser.save();
+      res.status(201).json({ message: 'Employee created successfully' });
+    } else {
+      res.status(403).json({ error: 'Only admin can create employees' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// User SignIn
+exports.signIn = async (req, res) => {
+  try {
+    const { usernameOrEmail, password } = req.body;
+    const user = await User.findOne({
+      $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    });
+    if (!user) throw new Error('User not found');
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) throw new Error('Invalid password');
+
+    const token = jwt.sign({ userId: user._id }, config.secret, { expiresIn: '1h' });
+    res.status(200).json({ token, loggedInUser: user });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+};
+
+// User Logout
+exports.logOut = (req, res, next) => {
+  try {
+    if (!req.params.id) return res.json({ msg: 'User ID is required' });
+    onlineUsers.delete(req.params.id);
+    return res.status(200).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get All Users
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, 'firstName lastName username email phone role');
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get Profile of Logged-in User
+exports.getProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId, 'firstName lastName username email phone dateOfBirth nationality role');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get One User by ID
+exports.getOne = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!userId) return res.status(400).json({ error: 'User ID is required' });
+
+    const user = await User.findById(userId, 'firstName lastName username email phone role dateOfBirth nationality');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Update User Profile
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const updateData = req.body;
+
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+    if (!updatedUser) return res.status(404).json({ error: 'User not found' });
+
+    res.status(200).json({ message: 'Profile updated successfully', updatedUser });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+// Delete User
+exports.deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!userId) return res.status(400).json({ error: 'User ID is required' });
+
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
