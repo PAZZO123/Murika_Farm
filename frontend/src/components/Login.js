@@ -11,7 +11,10 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       const response = await axios.post("http://localhost:5000/api/auth/signin", data);
-      localStorage.setItem("token", response.data.token); // Store token
+      const { token, currentUser } = response.data;
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
       navigate("/dashboard"); // Redirect after login
     } catch (err) {
       setError(err.response?.data?.error || "Login failed");

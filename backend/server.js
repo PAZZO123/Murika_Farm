@@ -37,25 +37,22 @@ require('./config/passport')(passport);
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const messageRoutes = require('./routes/messageRoutes');
-const caseRoutes = require('./routes/caseRoutes');
-const postRoutes = require('./routes/postRoutes');
-const resourceRoutes = require('./routes/resourceRoutes');
-const eventOrCampaignRoutes = require('./routes/eventOrCampaignRoutes');
-const discussionRoutes = require('./routes/discussionRoutes');
 const productRoutes = require('./routes/ProductRoutes');
 const projectRoutes = require('./routes/projectRoutes');
-const campaignRoutes = require('./routes/campaignRoutes');
+const chatRoutes = require("./routes/chatRoutes");
+const expenseRoutes = require('./routes/expenseRoutes'); 
+const clientproductRoutes = require("./routes/clientproductRoutes");
 
-app.use('/api', eventOrCampaignRoutes);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', messageRoutes);
-app.use('/api', campaignRoutes);
-app.use('/api', caseRoutes);
+app.use("/api", clientproductRoutes);
 app.use('/api', projectRoutes);
-app.use('/api', postRoutes); 
-app.use('/api', discussionRoutes); 
-app.use('/api/resources', resourceRoutes);
+app.use("/api/chats", chatRoutes);
+
+app.use('/api', expenseRoutes);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/media/:filename', (req, res) => {

@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const {
   signUp,
+  clientSignUp, 
   signIn,
   logOut,
   getAllUsers,
@@ -14,6 +15,7 @@ const {
 
 // Public routes
 router.post('/signup', signUp);
+router.post('/client-signup', clientSignUp);
 router.post('/signin', signIn);
 router.get('/logout/:id', logOut);
 

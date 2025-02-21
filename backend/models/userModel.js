@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["admin", "employee"], // Restrict role to "admin" and "employee"
+    enum: ["admin", "employee", "client"], // Restrict role to "admin" and "employee"
     required: true,
     default: "employee", // Default to "employee" if no role is specified
   }

@@ -1,57 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { ClipboardCheck, Users, FolderGit2, Activity } from 'lucide-react';
 
-const Task = () => {
+const ProjectDashboard = () => {
+  const [projects, setProjects] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4; // Default items per page
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const itemsPerPage = 4;
 
-  // Sample tasks data
-  const tasks = [
-    { id: '01', assignee: 'SHYAKA Don', status: 'In-Progress', project: 'Techzis', date: '28 August 2024 8:00 AM', progress: '25%' },
-    { id: '02', assignee: 'SHYAKA Don', status: 'Pending', project: 'Unipak', date: '28 August 2024 8:00 AM', progress: '25%' },
-    { id: '03', assignee: 'SHYAKA Don', status: 'Completed', project: 'Tentekere National', date: '28 August 2024 8:00 AM', progress: '30%' },
-    { id: '04', assignee: 'SHYAKA Don', status: 'In-Review', project: 'Amara', date: '28 August 2024 8:00 AM', progress: '30%' },
-    { id: '05', assignee: 'SHYAKA Don', status: 'Done', project: 'Wordpress', date: '28 August 2024 8:00 AM', progress: '25%' },
-    { id: '06', assignee: 'SHYAKA Don', status: 'Done', project: 'Techzis', date: '28 August 2024 8:00 AM', progress: '35%' },
-    { id: '07', assignee: 'SHYAKA Don', status: 'In-Review', project: 'Techzis', date: '28 August 2024 8:00 AM', progress: '30%' },
-    { id: '08', assignee: 'SHYAKA Don', status: 'Done', project: 'Techzis', date: '28 August 2024 8:00 AM', progress: '30%' }
-  ];
-
-  const getStatusColor = (status) => {
-    const colors = {
-      'In-Progress': 'bg-blue-100 text-blue-600',
-      'Pending': 'bg-orange-100 text-orange-600',
-      'Completed': 'bg-green-100 text-green-600',
-      'In-Review': 'bg-purple-100 text-purple-600',
-      'Done': 'bg-gray-100 text-gray-600'
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("http://localhost:5000/api/projects");
+        setProjects(response.data);
+        setError(null);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        setError("Failed to fetch projects. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
     };
-    return colors[status] || 'bg-gray-100 text-gray-600';
+
+    fetchProjects();
+  }, []);
+
+  const getStatusColor = (type) => {
+    const colors = {
+      'Ongoing': 'bg-blue-100 text-blue-600',
+      'Todo': 'bg-orange-100 text-orange-600',
+      'Completed': 'bg-green-100 text-green-600'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-600';
   };
 
+  // Calculate statistics
   const stats = [
-    { icon: ClipboardCheck, count: '15 Tasks', label: 'Completed', color: 'bg-yellow-50' },
-    { icon: Users, count: '20 Tasks', label: 'To Do', color: 'bg-blue-50' },
-    { icon: FolderGit2, count: '3 Projects', label: 'Ongoing Projects', color: 'bg-red-50' },
-    { icon: Activity, count: '28 Tasks', label: 'Total Tasks', color: 'bg-cyan-50' }
+    {
+      icon: ClipboardCheck,
+      count: `${projects.filter(p => p.type === 'Completed').length} Projects`,
+      label: 'Completed',
+      color: 'bg-yellow-50'
+    },
+    {
+      icon: Users,
+      count: `${projects.filter(p => p.type === 'Todo').length} Projects`,
+      label: 'To Do',
+      color: 'bg-blue-50'
+    },
+    {
+      icon: FolderGit2,
+      count: `${projects.filter(p => p.type === 'Ongoing').length} Projects`,
+      label: 'Ongoing Projects',
+      color: 'bg-red-50'
+    },
+    {
+      icon: Activity,
+      count: `${projects.length} Projects`,
+      label: 'Total Projects',
+      color: 'bg-cyan-50'
+    }
   ];
 
-  // Calculate total pages
-  const totalPages = Math.ceil(tasks.length / itemsPerPage);
+  // Pagination logic
+  const totalPages = Math.ceil(projects.length / itemsPerPage);
+  const currentProjects = projects.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  // Get current tasks based on the current page
-  const currentTasks = tasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
+  if (error) {
+    return (
+      <div className="p-6 text-red-600 bg-red-50 rounded-xl">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -70,34 +104,44 @@ const Task = () => {
         ))}
       </div>
 
-      {/* Task List */}
+      {/* Project List */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr className="text-left">
-                <th className="px-6 py-3 text-gray-500">No</th>
-                <th className="px-6 py-3 text-gray-500">Cancel</th>
-                <th className="px-6 py-3 text-gray-500">Status</th>
-                <th className="px-6 py-3 text-gray-500">Project</th>
-                <th className="px-6 py-3 text-gray-500">Due date</th>
-                <th className="px-6 py-3 text-gray-500">Progress</th>
+                <th className="px-6 py-3 text-gray-500">Title</th>
+                <th className="px-6 py-3 text-gray-500">Type</th>
+                <th className="px-6 py-3 text-gray-500">Description</th>
+                <th className="px-6 py-3 text-gray-500">Start Date</th>
+                <th className="px-6 py-3 text-gray-500">End Date</th>
+                <th className="px-6 py-3 text-gray-500">Team Size</th>
                 <th className="px-6 py-3 text-gray-500"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {currentTasks.map((task) => (
-                <tr key={task.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">{task.id}</td>
-                  <td className="px-6 py-4">{task.assignee}</td>
+              {currentProjects.map((project) => (
+                <tr key={project._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">{project.title}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(task.status)}`}>
-                      {task.status}
+                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(project.type)}`}>
+                      {project.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4">{task.project}</td>
-                  <td className="px-6 py-4">{task.date}</td>
-                  <td className="px-6 py-4">{task.progress}</td>
+                  <td className="px-6 py-4">
+                    {project.description.length > 50 
+                      ? `${project.description.substring(0, 50)}...` 
+                      : project.description}
+                  </td>
+                  <td className="px-6 py-4">
+                    {new Date(project.startDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    {new Date(project.endDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    {project.teamMembers.length} members
+                  </td>
                   <td className="px-6 py-4">
                     <button className="text-blue-600 hover:text-blue-800 font-medium">
                       View
@@ -113,8 +157,8 @@ const Task = () => {
         <div className="flex items-center justify-end px-6 py-3 border-t">
           <div className="flex items-center gap-2">
             <button 
-              className="text-green-600 hover:text-green-800" 
-              onClick={handlePrevious} 
+              className="text-green-600 hover:text-green-800 disabled:text-gray-400" 
+              onClick={() => setCurrentPage(prev => prev - 1)} 
               disabled={currentPage === 1}
             >
               Previous
@@ -123,7 +167,9 @@ const Task = () => {
               {Array.from({ length: totalPages }, (_, index) => (
                 <button
                   key={index}
-                  className={`w-8 h-8 flex items-center justify-center rounded ${currentPage === index + 1 ? 'bg-green-600 text-white' : 'hover:bg-gray-100'}`}
+                  className={`w-8 h-8 flex items-center justify-center rounded ${
+                    currentPage === index + 1 ? 'bg-green-600 text-white' : 'hover:bg-gray-100'
+                  }`}
                   onClick={() => setCurrentPage(index + 1)}
                 >
                   {index + 1}
@@ -131,8 +177,8 @@ const Task = () => {
               ))}
             </div>
             <button 
-              className="text-green-600 hover:text-green-800" 
-              onClick={handleNext} 
+              className="text-green-600 hover:text-green-800 disabled:text-gray-400" 
+              onClick={() => setCurrentPage(prev => prev + 1)} 
               disabled={currentPage === totalPages}
             >
               Next
@@ -144,4 +190,4 @@ const Task = () => {
   );
 };
 
-export default Task;
+export default ProjectDashboard;

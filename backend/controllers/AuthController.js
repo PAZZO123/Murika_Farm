@@ -62,12 +62,15 @@ exports.signIn = async (req, res) => {
     if (!isPasswordValid) throw new Error('Invalid password');
 
     const token = jwt.sign({ userId: user._id }, config.secret, { expiresIn: '1h' });
-    res.status(200).json({ token, loggedInUser: user });
+
+    // Exclude password before sending user details
+    const { password: _, ...loggedInUser } = user.toObject();
+
+    res.status(200).json({ token, currentUser: loggedInUser });
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
 };
-
 // User Logout
 exports.logOut = (req, res, next) => {
   try {
@@ -145,6 +148,40 @@ exports.deleteUser = async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+exports.clientSignUp = async (req, res) => {
+  try {
+    const { firstName, lastName, username, email, phone, password, dateOfBirth, nationality } = req.body;
+
+    // Check if the username or email already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username or email already in use' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new client user
+    const newUser = new User({
+      firstName,
+      lastName,
+      username,
+      email,
+      phone,
+      password: hashedPassword,
+      dateOfBirth,
+      nationality,
+      role: 'client', // Ensure clients are always created with role "client"
+    });
+
+    // Save to the database
+    await newUser.save();
+
+    res.status(201).json({ message: 'Client signed up successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

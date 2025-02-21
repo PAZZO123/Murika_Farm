@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Invoice = () => {
   const [payments, setPayments] = useState([
@@ -84,7 +85,18 @@ const Invoice = () => {
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
-      {/* Header with filters and totals */}
+        <div className='flex gap-2'>
+          <button className="flex items-center gap-2 px-4 py-2  border rounded-lg bg-white">
+          <Link to='/dashboard/invoice'>
+            Invoice
+            </Link>
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white">
+            <Link to='/dashboard/expense'>
+            Expenses
+            </Link>
+          </button>
+          </div>
       <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="relative">
           <button className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white">

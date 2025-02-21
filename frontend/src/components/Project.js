@@ -15,14 +15,13 @@ const Project = () => {
     description: "",
     teamMembers: [],
   });
-  const [users, setUsers] = useState([]); // To store users
-  const [filterType, setFilterType] = useState(""); // To store filter type
+  const [users, setUsers] = useState([]);
+  const [filterType, setFilterType] = useState("");
 
-  // Fetch users (team members) from API
+  // Fetch users with auth token
   useEffect(() => {
     const fetchUsers = async () => {
       const token = localStorage.getItem("token");
-
       try {
         const response = await axios.get("http://localhost:5000/api/auth/users", {
           headers: {
@@ -38,11 +37,12 @@ const Project = () => {
     fetchUsers();
   }, []);
 
-  // Fetch projects from API
+  // Fetch projects with populated team members
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/projects");
+        console.log("Fetched projects:", response.data); // Debug log
         setProjects(response.data);
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -52,13 +52,11 @@ const Project = () => {
     fetchProjects();
   }, []);
 
-  // Handle input change for form
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewProject({ ...newProject, [name]: value });
   };
 
-  // Handle checkbox change for team members
   const handleCheckboxChange = (memberId) => {
     setNewProject((prev) => ({
       ...prev,
@@ -68,15 +66,12 @@ const Project = () => {
     }));
   };
 
-  // Add new project
   const handleAddProject = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/api/projects", newProject, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      setProjects([...projects, response.data]);
+      const response = await axios.post("http://localhost:5000/api/projects", newProject);
+      // Fetch projects again to get the populated data
+      const updatedProjects = await axios.get("http://localhost:5000/api/projects");
+      setProjects(updatedProjects.data);
       setShowModal(false);
       setNewProject({
         title: "",
@@ -91,7 +86,6 @@ const Project = () => {
     }
   };
 
-  // Delete project
   const handleDeleteProject = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/api/projects/${id}`);
@@ -101,11 +95,12 @@ const Project = () => {
     }
   };
 
-  // Update project
   const handleUpdateProject = async (id) => {
     try {
       const response = await axios.put(`http://localhost:5000/api/projects/${id}`, newProject);
-      setProjects(projects.map((project) => (project._id === id ? response.data : project)));
+      // Fetch projects again to get the populated data
+      const updatedProjects = await axios.get("http://localhost:5000/api/projects");
+      setProjects(updatedProjects.data);
       setShowModal(false);
       setNewProject({
         title: "",
@@ -120,13 +115,8 @@ const Project = () => {
     }
   };
 
-  // Handle filter change
-  const handleFilterChange = (e) => {
-    setFilterType(e.target.value);
-  };
-
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-8">
       {/* Header with Search, Filter, and Add Project */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-2 border px-3 py-2 rounded-lg shadow-md">
@@ -139,16 +129,15 @@ const Project = () => {
           />
         </div>
 
-        {/* Filter Dropdown */}
         <select
-          onChange={handleFilterChange}
+          onChange={(e) => setFilterType(e.target.value)}
           value={filterType}
           className="bg-gray-200 px-4 py-2 rounded-lg"
         >
           <option value="">Filter</option>
           <option value="Ongoing">Ongoing</option>
           <option value="Completed">Completed</option>
-          <option value="Pending">Pending</option>
+          <option value="Todo">Todo</option>
         </select>
 
         <button
@@ -179,10 +168,11 @@ const Project = () => {
               </p>
               <div className="mt-2">
                 <span className="text-gray-500">👥 Team:</span>
-                <div className="flex space-x-2 mt-1">
-                  {project.teamMembers.map((member) => (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {Array.isArray(project.teamMembers) && project.teamMembers.map((member) => (
                     <span key={member._id} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                      {member.firstName} {member.lastName}
+                      {`${member.firstName || ''} ${member.lastName || ''}`}
+                      {(!member.firstName && !member.lastName) && member.email}
                     </span>
                   ))}
                 </div>
@@ -221,14 +211,17 @@ const Project = () => {
               onChange={handleChange}
               className="w-full border rounded p-2 mt-4"
             />
-            <input
-              type="text"
+            <select
               name="type"
-              placeholder="Project Type"
               value={newProject.type}
               onChange={handleChange}
               className="w-full border rounded p-2 mt-4"
-            />
+            >
+              <option value="">Select Type</option>
+              <option value="Ongoing">Ongoing</option>
+              <option value="Completed">Completed</option>
+              <option value="Todo">Todo</option>
+            </select>
             <div className="flex space-x-2 mt-4">
               <input
                 type="date"
@@ -254,15 +247,15 @@ const Project = () => {
             />
             <div className="mt-4">
               <label className="text-gray-700">Team Members</label>
-              <div className="flex flex-col mt-2">
+              <div className="flex flex-col mt-2 max-h-40 overflow-y-auto">
                 {users.map((user) => (
-                  <label key={user._id} className="flex items-center space-x-2">
+                  <label key={user._id} className="flex items-center space-x-2 p-1 hover:bg-gray-100">
                     <input
                       type="checkbox"
                       checked={newProject.teamMembers.includes(user._id)}
                       onChange={() => handleCheckboxChange(user._id)}
                     />
-                    <span>{user.firstName} {user.lastName}</span>
+                    <span>{`${user.firstName || ''} ${user.lastName || ''} (${user.email})`}</span>
                   </label>
                 ))}
               </div>
