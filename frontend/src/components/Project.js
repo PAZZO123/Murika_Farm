@@ -17,6 +17,7 @@ const Project = () => {
   });
   const [users, setUsers] = useState([]);
   const [filterType, setFilterType] = useState("");
+  const [editingProjectId, setEditingProjectId] = useState(null);
 
   // Fetch users with auth token
   useEffect(() => {
@@ -95,9 +96,11 @@ const Project = () => {
     }
   };
 
-  const handleUpdateProject = async (id) => {
+  const handleUpdateProject = async () => {
+    if (!editingProjectId) return;
+
     try {
-      const response = await axios.put(`http://localhost:5000/api/projects/${id}`, newProject);
+      await axios.put(`http://localhost:5000/api/projects/${editingProjectId}`, newProject);
       // Fetch projects again to get the populated data
       const updatedProjects = await axios.get("http://localhost:5000/api/projects");
       setProjects(updatedProjects.data);
@@ -110,9 +113,23 @@ const Project = () => {
         description: "",
         teamMembers: [],
       });
+      setEditingProjectId(null);
     } catch (error) {
       console.error("Error updating project:", error);
     }
+  };
+
+  const openEditModal = (project) => {
+    setNewProject({
+      title: project.title,
+      type: project.type,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      description: project.description,
+      teamMembers: project.teamMembers.map(member => member._id),
+    });
+    setEditingProjectId(project._id);
+    setShowModal(true);
   };
 
   return (
@@ -141,7 +158,10 @@ const Project = () => {
         </select>
 
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingProjectId(null);
+            setShowModal(true);
+          }}
           className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <FiPlus /> Add Project
@@ -180,7 +200,7 @@ const Project = () => {
               <div className="mt-4 flex space-x-4">
                 <button
                   className="bg-orange-500 text-white px-4 py-2 rounded-lg"
-                  onClick={() => handleUpdateProject(project._id)}
+                  onClick={() => openEditModal(project)}
                 >
                   Update
                 </button>
@@ -195,12 +215,12 @@ const Project = () => {
           ))}
       </div>
 
-      {/* Modal for Adding Project */}
+      {/* Modal for Adding/Editing Project */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Add Project</h2>
+              <h2 className="text-xl font-bold">{editingProjectId ? "Edit Project" : "Add Project"}</h2>
               <IoClose className="cursor-pointer text-gray-500" onClick={() => setShowModal(false)} />
             </div>
             <input
@@ -260,8 +280,11 @@ const Project = () => {
                 ))}
               </div>
             </div>
-            <button onClick={handleAddProject} className="w-full bg-orange-500 text-white mt-4 py-2 rounded-lg">
-              Add
+            <button
+              onClick={editingProjectId ? handleUpdateProject : handleAddProject}
+              className="w-full bg-orange-500 text-white mt-4 py-2 rounded-lg"
+            >
+              {editingProjectId ? "Update" : "Add"}
             </button>
           </div>
         </div>

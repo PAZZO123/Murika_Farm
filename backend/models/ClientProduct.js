@@ -1,4 +1,3 @@
-// models/Product.js
 const mongoose = require("mongoose");
 
 const clientproductSchema = new mongoose.Schema({
@@ -13,6 +12,26 @@ const clientproductSchema = new mongoose.Schema({
   harvestTime: { type: String, required: true },
   priceSoldAt: { type: Number, required: true },
   needLogistic: { type: Boolean, default: false },
+  image: { type: String }, // Image URL field
+  status: {
+    type: String,
+    enum: ['pending', 'received', 'paid'],
+    default: 'pending', // Default value is 'pending'
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'completed', 'failed'],
+    default: 'pending'
+  },
+  paymentAmount: {
+    type: Number
+  },
+  paymentDate: {
+    type: Date
+  },
+  acceptedDate: {
+    type: Date
+  }
 });
 
 module.exports = mongoose.model("ClientProduct", clientproductSchema);

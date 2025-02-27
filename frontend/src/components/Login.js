@@ -1,7 +1,11 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import { 
+  ChevronLeft
+} from "lucide-react";
+import logo from "../Assets/Logo.png";
 
 const Login = () => {
   const [error, setError] = useState("");
@@ -13,19 +17,47 @@ const Login = () => {
       const response = await axios.post("http://localhost:5000/api/auth/signin", data);
       const { token, currentUser } = response.data;
 
-    localStorage.setItem('token', token);
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      navigate("/dashboard"); // Redirect after login
+      localStorage.setItem('token', token);
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+      // Role-based navigation
+      switch (currentUser.role) {
+        case 'client':
+          navigate("/dashboard/clientoverview");
+          break;
+        case 'admin':
+          navigate("/dashboard/listuser");
+          break;
+        case 'employee':
+          navigate("/dashboard/stats");
+          break;
+        default:
+          navigate("/dashboard");
+      }
     } catch (err) {
       setError(err.response?.data?.error || "Login failed");
     }
   };
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-200 to-green-500">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h2 className="text-center text-2xl font-semibold text-green-600 mb-4">Login</h2>
-
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-200 to-green-500 py-12 px-4 sm:px-6 lg:px-8">
+            <Link 
+        to="/" 
+        className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-gray-700 transition-colors"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        <span className="ml-1">Back to Home</span>
+      </Link>
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
+        <div className="text-center">
+          <img
+            className="mx-auto h-20 w-auto"
+            src={logo}
+            alt="Logo"
+          />
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+        </div>
         {error && <p className="text-red-500 text-sm text-center mb-3">{error}</p>}
 
         <form onSubmit={handleSubmit(onSubmit)}>

@@ -1,5 +1,6 @@
 import React, { useState, memo } from "react";
 import axios from "axios";
+import logo from "../Assets/Logo.png";
 import { 
   User, 
   Mail, 
@@ -12,9 +13,9 @@ import {
   AlertCircle,
   ChevronLeft
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
 
-// Memoize the InputField component to prevent unnecessary re-renders
+
 const InputField = memo(({ icon: Icon, error, ...props }) => (
   <div className="relative mb-4">
     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
@@ -49,7 +50,7 @@ const Signup = () => {
     dateOfBirth: "",
     nationality: "",
   });
-
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
@@ -67,7 +68,7 @@ const Signup = () => {
       newErrors.phone = "Please enter a valid phone number";
     }
 
-    if (formData.password.length < 8) {
+    if (formData.password.length < 1) {
       newErrors.password = "Password must be at least 8 characters long";
     }
 
@@ -119,6 +120,7 @@ const Signup = () => {
         message: "Account created successfully! You can now log in."
       });
       
+      
       setFormData({
         firstName: "",
         lastName: "",
@@ -130,6 +132,7 @@ const Signup = () => {
         dateOfBirth: "",
         nationality: "",
       });
+      navigate("/login"); 
       
     } catch (error) {
       setStatus({
@@ -153,6 +156,11 @@ const Signup = () => {
 
       <div className="max-w-md w-full mx-auto space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div>
+        <img
+            className="mx-auto h-20 w-auto"
+            src={logo}
+            alt="Logo"
+          />
           <h2 className="text-center text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>

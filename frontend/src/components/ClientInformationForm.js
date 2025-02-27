@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 
 const ClientInformationForm = () => {
+  // State for form data
   const [formData, setFormData] = useState({
     names: "",
     id: "",
@@ -28,6 +29,7 @@ const ClientInformationForm = () => {
     harvestTime: "",
     priceSoldAt: "",
     needLogistic: false,
+    image: null, // For file upload
   });
 
   const [products, setProducts] = useState([]); // State to store all products
@@ -59,6 +61,14 @@ const ClientInformationForm = () => {
     }));
   };
 
+  // Handle file input changes
+  const handleFileChange = (e) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      image: e.target.files[0], // Store the selected file
+    }));
+  };
+
   // Handle checkbox changes
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
@@ -67,21 +77,57 @@ const ClientInformationForm = () => {
       [name]: checked,
     }));
   };
-
   // Handle form submission (Create or Update)
+  // Fix handleSubmit function
+  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      if (editMode) {
-        // Update existing product
-        await axios.put(`http://localhost:5000/api/clientproducts/${editProductId}`, formData);
-        alert("Product updated successfully!");
-      } else {
-        // Create new product
-        await axios.post("http://localhost:5000/api/clientproducts", formData);
-        alert("Product published successfully!");
+    const data = new FormData();
+    // Append all non-file fields
+    Object.keys(formData).forEach(key => {
+      if (key !== 'image') {
+        data.append(key, formData[key]);
       }
-      // Reset form and fetch updated products
+    });
+  
+    // Only append image if a new one is selected
+    if (formData.image instanceof File) {
+      data.append('image', formData.image);
+    }
+  try {
+    if (editMode) {
+      // Update existing product
+      const response = await axios.put(
+        `http://localhost:5000/api/clientproducts/${editProductId}`,
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      
+      // Update the products list with the updated item
+      setProducts(products.map(product => 
+        product._id === editProductId ? response.data : product
+      ));
+      alert("Product updated successfully!");
+    } else {
+      // Create new product
+      const response = await axios.post(
+        "http://localhost:5000/api/clientproducts",
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      // Add new product to the list
+      setProducts([...products, response.data]);
+      alert("Product published successfully!");
+    }
+  // Reset form and fetch updated products
       setFormData({
         names: "",
         id: "",
@@ -94,6 +140,7 @@ const ClientInformationForm = () => {
         harvestTime: "",
         priceSoldAt: "",
         needLogistic: false,
+        image: null,
       });
       setEditMode(false);
       setEditProductId(null);
@@ -103,14 +150,26 @@ const ClientInformationForm = () => {
       alert("Error submitting form. Please try again.");
     }
   };
-
   // Handle edit button click
+  // Fix handleEdit function
   const handleEdit = (product) => {
-    setFormData(product);
+    setFormData({
+      names: product.names,
+      id: product.id,
+      phoneNumber: product.phoneNumber,
+      email: product.email,
+      cooperativeName: product.cooperativeName,
+      location: product.location,
+      productType: product.productType,
+      plantTime: product.plantTime,
+      harvestTime: product.harvestTime,
+      priceSoldAt: product.priceSoldAt,
+      needLogistic: product.needLogistic,
+      image: product.image // Keep the existing image path instead of null
+    });
     setEditMode(true);
     setEditProductId(product._id);
   };
-
   // Handle delete button click
   const handleDelete = async (id) => {
     try {
@@ -122,7 +181,6 @@ const ClientInformationForm = () => {
       alert("Error deleting product. Please try again.");
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
@@ -335,11 +393,25 @@ const ClientInformationForm = () => {
           />
         </div>
 
+        {/* Image Upload */}
+        <div className="relative">
+          <label htmlFor="image" className="block text-gray-700 mb-1">
+            Product Image
+          </label>
+          <input
+            type="file"
+            id="image"
+            name="image"
+            onChange={handleFileChange}
+            className="w-full p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
         {/* Submit Button */}
         <div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 transition duration-300"
+            className="w-full bg-green-500 text-white p-3 rounded-md hover:bg-blue-600 transition duration-300"
           >
             {editMode ? "Update Product" : "Submit"}
           </button>
@@ -356,11 +428,18 @@ const ClientInformationForm = () => {
                 <div>
                   <p className="text-lg font-semibold">{product.names}</p>
                   <p className="text-gray-600">{product.productType}</p>
+                  {product.image && (
+                    <img
+                      src={`http://localhost:5000/${product.image}`}
+                      alt={product.names}
+                      className="mt-2 w-24 h-24 object-cover"
+                    />
+                  )}
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEdit(product)}
-                    className="text-blue-500 hover:text-blue-700"
+                    className="text-green-500 hover:text-green-700"
                   >
                     <FaEdit />
                   </button>

@@ -22,6 +22,9 @@ import Expense from './components/Expense';
 import Product from './components/Product'
 import Chat from './components/Chat';
 import ClientInformationForm from './components/ClientInformationForm';
+import AdminProductDetails from './components/AdminProductDetails';
+import AdminProductManagement from './components/AdminProductManagement';
+import ClientOverview from './components/ClientOverview';
 
 function App() {
   return (
@@ -49,6 +52,9 @@ function App() {
           <Route  path="chat" element={<Chat/>} />
           <Route  path="product" element={<Product/>} /> 
           <Route  path="clienttasks" element={<ClientInformationForm/>} /> 
+          <Route  path="clientproduct" element={<AdminProductDetails/>} /> 
+          <Route  path="clientoverview" element={<ClientOverview/>} /> 
+          <Route  path="adminproduct" element={<AdminProductManagement/>} /> 
           </Route> 
         </Routes>
     </Router>

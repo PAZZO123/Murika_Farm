@@ -11,13 +11,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// MongoDB connection
 mongoose.connect(config.database, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -29,12 +27,9 @@ connection.once('open', () => {
   console.log(`Using MongoDB URI: ${config.database}`);
 });
 
-// Passport middleware
 app.use(passport.initialize());
-// Import and configure Passport (assuming you're using JWT strategy)
 require('./config/passport')(passport);
 
-// Routes
 const authRoutes = require('./routes/authRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const productRoutes = require('./routes/ProductRoutes');
@@ -42,7 +37,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const chatRoutes = require("./routes/chatRoutes");
 const expenseRoutes = require('./routes/expenseRoutes'); 
 const clientproductRoutes = require("./routes/clientproductRoutes");
-
+const campaignRoutes = require('./routes/campaignRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -50,7 +45,7 @@ app.use('/api', messageRoutes);
 app.use("/api", clientproductRoutes);
 app.use('/api', projectRoutes);
 app.use("/api/chats", chatRoutes);
-
+app.use('/api', campaignRoutes);
 app.use('/api', expenseRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

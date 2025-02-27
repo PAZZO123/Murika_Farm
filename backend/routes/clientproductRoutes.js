@@ -1,10 +1,10 @@
-// routes/productRoutes.js
 const express = require("express");
 const router = express.Router();
 const clientproductController = require("../controllers/clientproductController");
+const upload = require("../Middlewares/multerConfig");
 
-// Create a new product
-router.post("/clientproducts", clientproductController.createProduct);
+// Create a new product with image upload
+router.post("/clientproducts", upload.single("image"), clientproductController.createProduct);
 
 // Get all products
 router.get("/clientproducts", clientproductController.getAllProducts);
@@ -13,8 +13,13 @@ router.get("/clientproducts", clientproductController.getAllProducts);
 router.get("/clientproducts/:id", clientproductController.getProductById);
 
 // Update a product by ID
-router.put("/clientproducts/:id", clientproductController.updateProduct);
+router.put("/clientproducts/:id", upload.single("image"), clientproductController.updateProduct);
+// ... existing routes ...
 
+// Update product status
+router.put("/clientproducts/:id/status", clientproductController.updateProductStatus);
+
+router.get('/payment-status/:id', clientproductController.getPaymentStatus);
 // Delete a product by ID
 router.delete("/clientproducts/:id", clientproductController.deleteProduct);
 

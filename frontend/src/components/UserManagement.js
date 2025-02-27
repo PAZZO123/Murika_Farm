@@ -1,32 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaSearch, FaTrash, FaPen, FaChevronRight, FaPlus } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaPen, FaChevronRight, FaPlus, FaChevronLeft } from 'react-icons/fa';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(5);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     dateOfBirth: "",
     nationality: "",
-    password:"",
+    password: "",
     username: "",
     phone: "",
     email: "",
-    password: "",
     role: "employee"
   });
   const [selectedId, setSelectedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Function to get the token from localStorage
   const getAuthToken = () => {
     return localStorage.getItem('token');
   };
 
-  // Function to configure headers for axios
   const getHeaders = () => {
     const token = getAuthToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -91,10 +90,9 @@ const UserManagement = () => {
         dateOfBirth: "",
         nationality: "",
         username: "",
-        password:"",
+        password: "",
         phone: "",
         email: "",
-        password: "",
         role: "employee"
       });
       fetchUsers();
@@ -145,21 +143,40 @@ const UserManagement = () => {
     user.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination logic
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header Section */}
       <div className="flex justify-between items-center mb-6">
-        <div className="relative w-64">
-          <input
-            type="text"
-            placeholder="Search users"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
-          />
-          <FaSearch className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
-        </div>
-        <div className="flex gap-2">
+        <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              type="text"
+              placeholder="Search users"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
+            />
+            <FaSearch className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+          </div>
           <button
             onClick={() => {
               setIsOpen(true);
@@ -185,20 +202,20 @@ const UserManagement = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-orange-50">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Username</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Email</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Phone</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Role</th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">Actions</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Name</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Username</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Email</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Phone</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Role</th>
+              <th className="px-6 py-4 text-right text-sm font-semibold text-orange-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
+            {currentUsers.map((user) => (
               <tr key={user._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
                   {`${user.firstName || ''} ${user.lastName || ''}`}
@@ -236,125 +253,159 @@ const UserManagement = () => {
             ))}
           </tbody>
         </table>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+          <div className="text-sm text-gray-500">
+            Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} users
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`p-2 rounded ${
+                currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+              }`}
+            >
+              <FaChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded ${
+                currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+              }`}
+            >
+              <FaChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Modal for User Form */}
       {isOpen && (
-        <div className="fixed inset-0 flex justify-center items-center z-50">
+        <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl w-96 p-6">
             <h3 className="text-lg font-semibold mb-4">{editMode ? "Edit User" : "Add User"}</h3>
             <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-            <div className="mb-4">
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                id="firstName"
-                placeholder="First Name"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
+              <div className="mb-4">
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  id="firstName"
+                  placeholder="First Name"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+                  required
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                id="lastName"
-                placeholder="Last Name"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">username</label>
-              <input
-                type="text"
-                name="username"
-                id="username"
-                placeholder="Username"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input
-                type="password"
-                name="password"
-                id="password"
-                placeholder="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
+              <div className="mb-4">
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  id="lastName"
+                  placeholder="Last Name"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+                  required
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-              <input
-                type="text"
-                name="phone"
-                id="phone"
-                placeholder="Phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-              />
-            </div>
+              <div className="mb-4">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
+                <input
+                  type="text"
+                  name="username"
+                  id="username"
+                  placeholder="Username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+                  required
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-              <select
-                name="role"
-                id="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-              >
-                <option value="employee">Employee</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-              </select>
-            </div>
+              <div className="mb-4">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+                  required
+                />
+              </div>
 
-            <div className="flex justify-end gap-4">
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="px-4 py-2 bg-gray-200 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500"
-              >
-                Save
-              </button>
-            </div>
-          </form>
+              <div className="mb-4">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  id="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+                  required={!editMode}
+                />
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                <input
+                  type="text"
+                  name="phone"
+                  id="phone"
+                  placeholder="Phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+                <select
+                  name="role"
+                  id="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+                >
+                  <option value="employee">Employee</option>
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500"
+                >
+                  {editMode ? "Update" : "Save"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -1,55 +1,59 @@
-// models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
-  category: {
+  name: {
     type: String,
     required: true,
+    trim: true
   },
-  vendor: {
+  description: {
     type: String,
-    required: true,
-  },
-  quantity: {
-    type: Number, // Changed to Number for better validation
-    required: true,
-  },
-  isKG: {
-    type: Boolean,
-    default: false,
-  },
-  isDozen: {
-    type: Boolean,
-    default: false,
+    required: true
   },
   price: {
-    type: Number, // Changed to Number for better validation
+    type: Number,
     required: true,
+    min: 0
+  },
+  category: {
+    type: String,
+    required: true
+  },
+  vendor: {          // Add vendor field
+    type: String,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  isKG: {           // Add isKG field
+    type: Boolean,
+    default: false
+  },
+  isDozen: {        // Add isDozen field
+    type: Boolean,
+    default: false
   },
   image: {
     type: String,
-    default: "/api/placeholder/100/100"
+    required: false
   },
-  dateRecorded: {
+  createdAt: {
     type: Date,
     default: Date.now
   },
-  salesPerDay: {
-    type: Number,
-    default: 0
-  },
-  expectedSales: {
-    type: Number,
-    default: 0
-  },
-  revenue: {
-    type: Number,
-    default: 0
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true
 });
 
-const Product = mongoose.model('Product', productSchema);
+// Update the updatedAt timestamp before saving
+productSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
-module.exports = Product;
+module.exports = mongoose.model('Product', productSchema);

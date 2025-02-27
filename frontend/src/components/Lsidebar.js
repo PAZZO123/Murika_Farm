@@ -71,7 +71,6 @@ const Lsidebar = () => {
               <SidebarItem to="/dashboard/stats" icon={<FaChartBar />} label="Overview" />
               <SidebarItem to="/dashboard/product" icon={<FaBoxes />} label="Inventory" />
               <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
-              <SidebarItem to="/dashboard/project" icon={<FaCog />} label="Project" />
               <SidebarItem to="/dashboard/task" icon={<FaCog />} label="Task" />
               <SidebarItem to="/dashboard/marketing" icon={<FaCog />} label="Marketing" />
               <SidebarItem to="/dashboard/settings" icon={<FaCog />} label="Settings" />
@@ -82,6 +81,8 @@ const Lsidebar = () => {
           {userRole === "admin" && (
             <>
               <SidebarItem to="/dashboard/listuser" icon={<FaUsers />} label="Manage Users" />
+              <SidebarItem to="/dashboard/project" icon={<FaCog />} label="Project" />
+              <SidebarItem to="/dashboard/adminproduct" icon={<FaCog />} label="Products" />
             </>
           )}
         </ul>
