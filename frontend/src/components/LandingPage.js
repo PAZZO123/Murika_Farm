@@ -40,7 +40,7 @@ const LandingPage = () => {
       <div className="container mx-auto px-4 pt-20">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Business Support <span className="text-green-600">MANAGEMENT SYSTEM</span>
+           Mulika <span className="text-green-600">MANAGEMENT SYSTEM</span>
           </h1>
           <p className="text-xl text-gray-600 mb-12">
             The Mulika Business Support Management System streamlines internal operations,

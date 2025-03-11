@@ -187,117 +187,133 @@ const Product = () => {
   };
 
   const ProductForm = ({ onSubmit, title, submitText }) => (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <h2 className="text-center text-xl font-medium">{title}</h2>
-      <div>
-        <label className="block text-sm">Name</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded-lg"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Description</label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded-lg"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Category</label>
-        <input
-          type="text"
-          name="category"
-          value={formData.category}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded-lg"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Vendor</label>
-        <input
-          type="text"
-          name="vendor"
-          value={formData.vendor}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded-lg"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Quantity</label>
-        <input
-          type="number"
-          name="quantity"
-          value={formData.quantity}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded-lg"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Price</label>
-        <input
-          type="number"
-          name="price"
-          value={formData.price}
-          onChange={handleInputChange}
-          className="w-full p-2 border rounded-lg"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Is in KG?</label>
-        <input
-          type="checkbox"
-          name="isKG"
-          checked={formData.isKG}
-          onChange={handleInputChange}
-          className="mr-2"
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Is in Dozen?</label>
-        <input
-          type="checkbox"
-          name="isDozen"
-          checked={formData.isDozen}
-          onChange={handleInputChange}
-          className="mr-2"
-        />
-      </div>
-      <div>
-        <label className="block text-sm">Product Image</label>
-        <input
-          type="file"
-          onChange={handleImageChange}
-          className="w-full p-2 border rounded-lg"
-        />
-      </div>
-      <div className="flex justify-center gap-4 mt-6">
-        <button
-          type="button"
-          onClick={() => title === "Add Product" ? setIsAddModalOpen(false) : setIsEditModalOpen(false)}
-          className="px-4 py-2 bg-gray-300 text-white rounded-lg"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-        >
-          {submitText}
-        </button>
-      </div>
-    </form>
+<form onSubmit={onSubmit} className="space-y-4">
+  <h2 className="text-center text-xl font-medium">{title}</h2>
+
+  {/* Two-column Grid Layout */}
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm">Name</label>
+      <input
+        type="text"
+        name="name"
+        value={formData.name}
+        onChange={handleInputChange}
+        className="w-full p-2 border rounded-lg"
+        required
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm">Category</label>
+      <input
+        type="text"
+        name="category"
+        value={formData.category}
+        onChange={handleInputChange}
+        className="w-full p-2 border rounded-lg"
+        required
+      />
+    </div>
+
+    <div className="col-span-2">
+      <label className="block text-sm">Description</label>
+      <textarea
+        name="description"
+        value={formData.description}
+        onChange={handleInputChange}
+        className="w-full p-2 border rounded-lg"
+        required
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm">Vendor</label>
+      <input
+        type="text"
+        name="vendor"
+        value={formData.vendor}
+        onChange={handleInputChange}
+        className="w-full p-2 border rounded-lg"
+        required
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm">Quantity</label>
+      <input
+        type="number"
+        name="quantity"
+        value={formData.quantity}
+        onChange={handleInputChange}
+        className="w-full p-2 border rounded-lg"
+        required
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm">Price</label>
+      <input
+        type="number"
+        name="price"
+        value={formData.price}
+        onChange={handleInputChange}
+        className="w-full p-2 border rounded-lg"
+        required
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm">Product Image</label>
+      <input
+        type="file"
+        onChange={handleImageChange}
+        className="w-full p-2 border rounded-lg"
+      />
+    </div>
+
+    {/* Checkboxes */}
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        name="isKG"
+        checked={formData.isKG}
+        onChange={handleInputChange}
+        className="w-5 h-5"
+      />
+      <label className="text-sm">Is in KG?</label>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        name="isDozen"
+        checked={formData.isDozen}
+        onChange={handleInputChange}
+        className="w-5 h-5"
+      />
+      <label className="text-sm">Is in Dozen?</label>
+    </div>
+  </div>
+
+  {/* Buttons Below */}
+  <div className="flex justify-center gap-4 mt-6">
+    <button
+      type="button"
+      onClick={() => title === "Add Product" ? setIsAddModalOpen(false) : setIsEditModalOpen(false)}
+      className="px-4 py-2 bg-gray-300 text-black rounded-lg hover:bg-gray-400"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+    >
+      {submitText}
+    </button>
+  </div>
+</form>
+
   );
 
   return (

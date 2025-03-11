@@ -29,14 +29,20 @@ const Project = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        setUsers(response.data);
+  
+        // Filter users based on allowed roles
+        const allowedRoles = ["employee", "finance", "marketing"];
+        const filteredUsers = response.data.filter(user => allowedRoles.includes(user.role));
+  
+        setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
     };
-
+  
     fetchUsers();
   }, []);
+  
 
   // Fetch projects with populated team members
   useEffect(() => {

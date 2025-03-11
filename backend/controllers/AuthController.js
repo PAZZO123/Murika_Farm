@@ -32,17 +32,19 @@ exports.insertAdminUser = async () => {
 exports.signUp = async (req, res) => {
   try {
     const { password, role } = req.body;
+    const allowedRoles = ['employee', 'finance', 'manager', 'marketing'];
 
-    if (role && role.toLowerCase() === 'employee') {
+    if (role && allowedRoles.includes(role.toLowerCase())) {
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = new User({
         ...req.body,
+        role: role.toLowerCase(),
         password: hashedPassword,
       });
       await newUser.save();
-      res.status(201).json({ message: 'Employee created successfully' });
+      res.status(201).json({ message: `${role} created successfully` });
     } else {
-      res.status(403).json({ error: 'Only admin can create employees' });
+      res.status(403).json({ error: 'Invalid role or unauthorized access. Only admin can create staff members.' });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });

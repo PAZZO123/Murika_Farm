@@ -4,11 +4,36 @@ const ClientProduct = require("../models/ClientProduct");
 // Create a new product with an image
 exports.createProduct = async (req, res) => {
   try {
-    const { names, id, phoneNumber, email, cooperativeName, location, productType, plantTime, harvestTime, priceSoldAt, needLogistic } = req.body;
+    // Ensure userId is a single string value
+    const userId = Array.isArray(req.body.userId) 
+      ? req.body.userId[0] 
+      : req.body.userId;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        message: "User ID is required", 
+        error: "No user authentication found" 
+      });
+    }
+
+    const { 
+      names, 
+      id, 
+      phoneNumber, 
+      email, 
+      cooperativeName, 
+      location, 
+      productType, 
+      plantTime, 
+      harvestTime, 
+      priceSoldAt, 
+      needLogistic 
+    } = req.body;
 
     const imageUrl = req.file ? `uploads/${req.file.filename}` : null;
 
     const newProduct = new ClientProduct({
+      userId, // Use the single userId value
       names,
       id,
       phoneNumber,
@@ -19,14 +44,21 @@ exports.createProduct = async (req, res) => {
       plantTime,
       harvestTime,
       priceSoldAt,
-      needLogistic,
+      needLogistic: needLogistic === 'true' || needLogistic === true,
       image: imageUrl,
     });
 
     await newProduct.save();
-    res.status(201).json({ message: "Product created successfully!", product: newProduct });
+    res.status(201).json({ 
+      message: "Product created successfully!", 
+      product: newProduct 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error creating product", error: error.message });
+    console.error("Product creation error:", error);
+    res.status(500).json({ 
+      message: "Error creating product", 
+      error: error.message 
+    });
   }
 };
 
@@ -179,5 +211,22 @@ exports.getPaymentStatus = async (req, res) => {
       success: false,
       error: "Server Error"
     });
+  }
+};
+// Get products by User ID
+exports.getProductsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Fetch products associated with the given user ID
+    const products = await ClientProduct.find({ userId: userId });
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({ message: "No products found for this user" });
+    }
+
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching products by user", error: error.message });
   }
 };

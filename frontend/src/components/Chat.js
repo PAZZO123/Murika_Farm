@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Send, User, Eye } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Send, User, Eye, MessageCircle } from "lucide-react";
 
 const getAuthToken = () => localStorage.getItem("token");
 
@@ -57,82 +57,101 @@ export default function Chat() {
   };
 
   return (
-    <div className="ml-9 flex h-screen">
+    <div className="flex h-screen border-2 border-green-500 bg-white">
       {/* Sidebar */}
-      <div className="w-1/4 bg-gray-200 p-4 overflow-y-auto">
-        <h2 className="text-xl font-bold mb-2">Users</h2>
+      <div className="w-1/4 bg-green-50 p-4 overflow-y-auto border-r border-green-100 rounded-lg">
+        <div className="flex items-center mb-4">
+          <MessageCircle className="w-6 h-6 mr-2 text-green-600" />
+          <h2 className="text-xl font-bold text-green-700">Chats</h2>
+        </div>
         {users.length > 0 ? (
           users.map((user) => (
             <div
               key={user._id}
-              className={`p-2 cursor-pointer rounded-lg flex items-center space-x-2 ${
-                selectedUser?._id === user._id ? "bg-green-500 text-white" : "bg-white"
-              }`}
+              className={`
+                p-2 mb-2 cursor-pointer rounded-lg flex items-center space-x-2 transition-all
+                ${selectedUser?._id === user._id 
+                  ? "bg-green-500 text-white hover:bg-green-600" 
+                  : "bg-white hover:bg-green-100 text-green-800"}
+              `}
               onClick={() => setSelectedUser(user)}
             >
               <User className="w-5 h-5" />
-              <span>{user.firstName} {user.lastName} ({user.role})</span>
+              <span className="truncate">
+                {user.firstName} {user.lastName} ({user.role})
+              </span>
             </div>
           ))
         ) : (
-          <p className="text-gray-500">No users available</p>
+          <p className="text-green-500 text-center">No users available</p>
         )}
       </div>
 
       {/* Chat Section */}
       <div className="w-3/4 flex flex-col">
-        <div className="flex-1 p-4 overflow-y-auto bg-gray-100">
+        <div className="flex-1 p-4 overflow-y-auto bg-white">
           {selectedUser ? (
             messages.length > 0 ? (
-              messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`p-2 my-1 flex ${
-                    msg.sender === currentUser?._id ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {msg.sender !== currentUser?._id && (
-                    <User className="w-6 h-6 mr-2 text-gray-600" />
-                  )}
-                  <div className="flex items-start max-w-[70%]">
-                    <span
-                      className={`inline-block p-2 rounded-lg ${
-                        msg.sender === currentUser?._id 
-                          ? "bg-green-500 text-white" 
-                          : "bg-gray-300"
-                      }`}
-                    >
-                      {msg.content}
-                    </span>
-                    <Eye className="w-4 h-4 ml-1 text-gray-400 mt-1" />
+              <div className="space-y-3">
+                {messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`
+                      flex items-end
+                      ${msg.sender === currentUser?._id 
+                        ? "justify-end" 
+                        : "justify-start"}
+                    `}
+                  >
+                    <div className="flex items-center space-x-2 max-w-[70%]">
+                      {msg.sender !== currentUser?._id && (
+                        <User className="w-6 h-6 text-green-600" />
+                      )}
+                      <div 
+                        className={`
+                          p-2 rounded-lg shadow-sm
+                          ${msg.sender === currentUser?._id 
+                            ? "bg-green-500 text-white" 
+                            : "bg-green-50 text-green-800"}
+                        `}
+                      >
+                        {msg.content}
+                      </div>
+                      <Eye className="w-4 h-4 text-green-400" />
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center">No messages yet.</p>
+              <div className="flex items-center justify-center h-full text-green-500">
+                No messages yet.
+              </div>
             )
           ) : (
-            <p className="text-gray-500 text-center">Select a user to start chatting.</p>
+            <div className="flex items-center justify-center h-full text-green-500">
+              Select a user to start chatting
+            </div>
           )}
         </div>
 
         {/* Message Input */}
-        <div className="p-4 flex bg-white border-t">
+        <div className="p-4 bg-green-50 border-t border-green-100 flex space-x-2">
           <input
             type="text"
-            className="flex-1 border p-2 rounded-lg"
             placeholder="Type a message..."
+            className="flex-1 p-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={!selectedUser}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           />
           <button
-            className={`ml-2 p-2 rounded-lg ${
-              selectedUser 
+            className={`
+              p-2 rounded-lg transition-colors
+              ${selectedUser 
                 ? "bg-green-500 text-white hover:bg-green-600" 
-                : "bg-gray-400 text-gray-200 cursor-not-allowed"
-            }`}
+                : "bg-gray-400 text-gray-200 cursor-not-allowed"}
+            `}
             onClick={sendMessage}
             disabled={!selectedUser}
           >

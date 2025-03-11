@@ -108,6 +108,28 @@ const deleteProject = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+// Get projects by team member ID
+const getProjectsByTeamMember = async (req, res) => {
+  try {
+    const { teamMemberId } = req.params;
+
+    // Validate if the user exists
+    const userExists = await User.findById(teamMemberId);
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Fetch projects where the user is part of the teamMembers array
+    const projects = await Project.find({ teamMembers: teamMemberId })
+      .populate('teamMembers', 'firstName lastName email');
+
+    return res.status(200).json(projects);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 module.exports = {
   createProject,
@@ -115,4 +137,5 @@ module.exports = {
   getProjectById,
   updateProject,
   deleteProject,
+  getProjectsByTeamMember,
 };

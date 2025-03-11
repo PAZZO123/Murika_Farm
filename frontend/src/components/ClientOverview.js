@@ -13,6 +13,13 @@ import {
   Mail
 } from 'lucide-react';
 
+const getAuthToken = () => localStorage.getItem("token");
+
+const getHeaders = () => {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const COLORS = {
   primary: ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'],
   success: ['#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0'],
@@ -40,7 +47,6 @@ const ClientOverview = () => {
     harvestTiming: []
   });
 
-  // Fetch products from API
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -48,7 +54,16 @@ const ClientOverview = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/clientproducts");
+      const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+      const userId = currentUser._id;
+      const response = await axios.get(
+        `http://localhost:5000/api/clientproducts/user/${userId}`,
+        { headers: getHeaders() }
+      );
+      
       setProducts(response.data);
       calculateStatistics(response.data);
       prepareChartData(response.data);

@@ -289,125 +289,133 @@ const UserManagement = () => {
       {/* Modal for User Form */}
       {isOpen && (
         <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl w-96 p-6">
-            <h3 className="text-lg font-semibold mb-4">{editMode ? "Edit User" : "Add User"}</h3>
-            <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-              <div className="mb-4">
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  id="firstName"
-                  placeholder="First Name"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  id="lastName"
-                  placeholder="Last Name"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
-                <input
-                  type="text"
-                  name="username"
-                  id="username"
-                  placeholder="Username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                  required={!editMode}
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                <input
-                  type="text"
-                  name="phone"
-                  id="phone"
-                  placeholder="Phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-                <select
-                  name="role"
-                  id="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
-                >
-                  <option value="employee">Employee</option>
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500"
-                >
-                  {editMode ? "Update" : "Save"}
-                </button>
-              </div>
-            </form>
-          </div>
+  <div className="bg-white rounded-lg shadow-xl w-[500px] p-6">
+    <h3 className="text-lg font-semibold mb-4">{editMode ? "Edit User" : "Add User"}</h3>
+    
+    <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+      {/* Two-column Grid Layout */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
+          <input
+            type="text"
+            name="firstName"
+            id="firstName"
+            placeholder="First Name"
+            value={formData.firstName}
+            onChange={handleInputChange}
+            className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+            required
+          />
         </div>
+
+        <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
+          <input
+            type="text"
+            name="lastName"
+            id="lastName"
+            placeholder="Last Name"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
+          <input
+            type="text"
+            name="username"
+            id="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleInputChange}
+            className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleInputChange}
+            className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleInputChange}
+            className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+            required={!editMode}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+          <input
+            type="text"
+            name="phone"
+            id="phone"
+            placeholder="Phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+          />
+        </div>
+
+        <div className="col-span-2">
+          <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+          <select
+            name="role"
+            id="role"
+            value={formData.role}
+            onChange={handleInputChange}
+            className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
+          >
+            <option value="employee">Employee</option>
+            <option value="finance">Finance Manager</option>
+            <option value="marketing">Marketing Manager</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Buttons Below */}
+      <div className="flex justify-end gap-4 mt-6">
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500"
+        >
+          {editMode ? "Update" : "Save"}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
       )}
     </div>
   );

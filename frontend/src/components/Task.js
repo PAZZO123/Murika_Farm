@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ClipboardCheck, Users, FolderGit2, Activity } from 'lucide-react';
 
+const getAuthToken = () => localStorage.getItem("token");
+
+const getHeaders = () => {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const ProjectDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -10,10 +17,21 @@ const ProjectDashboard = () => {
   const itemsPerPage = 4;
 
   useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+    if (!currentUser) {
+      setError("User not authenticated");
+      setLoading(false);
+      return;
+    }
+    const teamMemberId = currentUser._id;
+
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5000/api/projects");
+        const response = await axios.get(
+          `http://localhost:5000/api/projects/team-member/${teamMemberId}`,
+          { headers: getHeaders() }
+        );
         setProjects(response.data);
         setError(null);
       } catch (error) {
@@ -36,7 +54,7 @@ const ProjectDashboard = () => {
     return colors[type] || 'bg-gray-100 text-gray-600';
   };
 
-  // Calculate statistics
+  // Calculate statistics based on filtered projects
   const stats = [
     {
       icon: ClipboardCheck,
@@ -86,6 +104,7 @@ const ProjectDashboard = () => {
       </div>
     );
   }
+
 
   return (
     <div className="p-6">

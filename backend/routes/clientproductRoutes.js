@@ -22,5 +22,6 @@ router.put("/clientproducts/:id/status", clientproductController.updateProductSt
 router.get('/payment-status/:id', clientproductController.getPaymentStatus);
 // Delete a product by ID
 router.delete("/clientproducts/:id", clientproductController.deleteProduct);
+router.get('/clientproducts/user/:userId', clientproductController.getProductsByUserId);
 
 module.exports = router;

@@ -15,9 +15,16 @@ import {
   FaTrash,
 } from "react-icons/fa";
 
+const getAuthToken = () => localStorage.getItem("token");
+
+const getHeaders = () => {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const ClientInformationForm = () => {
-  // State for form data
   const [formData, setFormData] = useState({
+    userId: "",
     names: "",
     id: "",
     phoneNumber: "",
@@ -29,22 +36,32 @@ const ClientInformationForm = () => {
     harvestTime: "",
     priceSoldAt: "",
     needLogistic: false,
-    image: null, // For file upload
+    image: null,
   });
 
-  const [products, setProducts] = useState([]); // State to store all products
-  const [editMode, setEditMode] = useState(false); // State to toggle edit mode
-  const [editProductId, setEditProductId] = useState(null); // State to store the ID of the product being edited
+  const [products, setProducts] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [editProductId, setEditProductId] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // Fetch all products on component mount
   useEffect(() => {
-    fetchProducts();
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    setCurrentUser(user);
+    if (user) {
+      setFormData(prevData => ({
+        ...prevData,
+        userId: user._id
+      }));
+      fetchProducts(user._id);
+    }
   }, []);
 
-  // Fetch all products from the backend
-  const fetchProducts = async () => {
+  const fetchProducts = async (userId) => {
     try {
-      const response = await axios.get("http://localhost:5000/api/clientproducts");
+      const response = await axios.get(
+        `http://localhost:5000/api/clientproducts/user/${userId}`,
+        { headers: getHeaders() }
+      );
       setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -52,83 +69,75 @@ const ClientInformationForm = () => {
     }
   };
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
+    setFormData(prevData => ({
       ...prevData,
       [name]: value,
     }));
   };
 
-  // Handle file input changes
   const handleFileChange = (e) => {
-    setFormData((prevData) => ({
+    setFormData(prevData => ({
       ...prevData,
-      image: e.target.files[0], // Store the selected file
+      image: e.target.files[0],
     }));
   };
 
-  // Handle checkbox changes
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
-    setFormData((prevData) => ({
+    setFormData(prevData => ({
       ...prevData,
       [name]: checked,
     }));
   };
-  // Handle form submission (Create or Update)
-  // Fix handleSubmit function
-  // Update the handleSubmit function
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!currentUser) {
+      alert("User not authenticated!");
+      return;
+    }
+
     const data = new FormData();
-    // Append all non-file fields
+    data.append('userId', currentUser._id.toString());
+
     Object.keys(formData).forEach(key => {
-      if (key !== 'image') {
-        data.append(key, formData[key]);
+      if (key === 'image' && formData[key] instanceof File) {
+        data.append('image', formData[key]);
+      } else if (key !== 'image') {
+        const value = key === 'userId' ? currentUser._id.toString() :
+                      formData[key] === true ? 'true' : 
+                      formData[key] === false ? 'false' : 
+                      formData[key];
+        data.append(key, value);
       }
     });
-  
-    // Only append image if a new one is selected
-    if (formData.image instanceof File) {
-      data.append('image', formData.image);
-    }
-  try {
-    if (editMode) {
-      // Update existing product
-      const response = await axios.put(
-        `http://localhost:5000/api/clientproducts/${editProductId}`,
-        data,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      
-      // Update the products list with the updated item
-      setProducts(products.map(product => 
-        product._id === editProductId ? response.data : product
-      ));
-      alert("Product updated successfully!");
-    } else {
-      // Create new product
-      const response = await axios.post(
-        "http://localhost:5000/api/clientproducts",
-        data,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      // Add new product to the list
-      setProducts([...products, response.data]);
-      alert("Product published successfully!");
-    }
-  // Reset form and fetch updated products
+
+    try {
+      const config = {
+        headers: {
+          ...getHeaders(),
+          "Content-Type": "multipart/form-data",
+        },
+      };
+
+      if (editMode) {
+        await axios.put(
+          `http://localhost:5000/api/clientproducts/${editProductId}`,
+          data,
+          config
+        );
+      } else {
+        await axios.post(
+          "http://localhost:5000/api/clientproducts",
+          data,
+          config
+        );
+      }
+
       setFormData({
+        userId: currentUser._id,
         names: "",
         id: "",
         phoneNumber: "",
@@ -144,16 +153,16 @@ const ClientInformationForm = () => {
       });
       setEditMode(false);
       setEditProductId(null);
-      fetchProducts();
+      fetchProducts(currentUser._id);
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Error submitting form. Please try again.");
+      alert(`Error: ${error.response?.data?.message || error.message}`);
     }
   };
-  // Handle edit button click
-  // Fix handleEdit function
+
   const handleEdit = (product) => {
     setFormData({
+      userId: currentUser._id,
       names: product.names,
       id: product.id,
       phoneNumber: product.phoneNumber,
@@ -165,22 +174,25 @@ const ClientInformationForm = () => {
       harvestTime: product.harvestTime,
       priceSoldAt: product.priceSoldAt,
       needLogistic: product.needLogistic,
-      image: product.image // Keep the existing image path instead of null
+      image: product.image
     });
     setEditMode(true);
     setEditProductId(product._id);
   };
-  // Handle delete button click
+
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/clientproducts/${id}`);
+      await axios.delete(`http://localhost:5000/api/clientproducts/${id}`, {
+        headers: getHeaders()
+      });
+      fetchProducts(currentUser._id);
       alert("Product deleted successfully!");
-      fetchProducts();
     } catch (error) {
       console.error("Error deleting product:", error);
       alert("Error deleting product. Please try again.");
     }
   };
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
@@ -200,6 +212,7 @@ const ClientInformationForm = () => {
               name="names"
               value={formData.names}
               onChange={handleChange}
+              placeholder="Enter your full name"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />
@@ -219,6 +232,7 @@ const ClientInformationForm = () => {
               name="id"
               value={formData.id}
               onChange={handleChange}
+              placeholder="Enter your ID"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />
@@ -238,6 +252,7 @@ const ClientInformationForm = () => {
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
+              placeholder="Enter your phone number"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />
@@ -257,6 +272,7 @@ const ClientInformationForm = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter your email"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />
@@ -276,6 +292,7 @@ const ClientInformationForm = () => {
               name="cooperativeName"
               value={formData.cooperativeName}
               onChange={handleChange}
+              placeholder="Enter cooperative name"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />
@@ -295,6 +312,7 @@ const ClientInformationForm = () => {
               name="location"
               value={formData.location}
               onChange={handleChange}
+              placeholder="Enter your location"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />
@@ -314,6 +332,7 @@ const ClientInformationForm = () => {
               name="productType"
               value={formData.productType}
               onChange={handleChange}
+              placeholder="Enter product type"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />
@@ -328,7 +347,7 @@ const ClientInformationForm = () => {
           <div className="flex items-center">
             <FaCalendarAlt className="absolute left-3 text-gray-400" />
             <input
-              type="text"
+              type="date"
               id="plantTime"
               name="plantTime"
               value={formData.plantTime}
@@ -347,7 +366,7 @@ const ClientInformationForm = () => {
           <div className="flex items-center">
             <FaCalendarAlt className="absolute left-3 text-gray-400" />
             <input
-              type="text"
+              type="date"
               id="harvestTime"
               name="harvestTime"
               value={formData.harvestTime}
@@ -371,6 +390,7 @@ const ClientInformationForm = () => {
               name="priceSoldAt"
               value={formData.priceSoldAt}
               onChange={handleChange}
+              placeholder="Enter price"
               className="w-full pl-10 p-2 border border-gray-300 rounded-md hover:border-blue-500 focus:outline-none focus:border-blue-500"
               required
             />

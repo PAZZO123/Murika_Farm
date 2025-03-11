@@ -1,37 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import axios from "axios";
 import logo from "../Assets/Logo.png";
-import { FaChartBar, FaBoxes, FaCog, FaUsers, FaSignOutAlt } from "react-icons/fa";
+import { 
+  FaChartBar, FaBoxes, FaCog, FaUsers, FaSignOutAlt, 
+  FaBriefcase, FaMoneyBillWave, FaBullhorn, FaTasks 
+} from "react-icons/fa";
 
 const Lsidebar = () => {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
-
-  const getHeaders = () => {
-    const token = getAuthToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
 
   useEffect(() => {
     const fetchUserRole = () => {
-      // Get current user from localStorage
       const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      
       if (currentUser) {
-        // If user is found, set the role
-        const role = currentUser.role;
-        setUserRole(role);
-        console.log("User Role from localStorage:", role); // Log the role here
-      } else {
-        console.log("No currentUser found in localStorage.");
+        setUserRole(currentUser.role);
+        console.log("User Role:", currentUser.role);
       }
-      
       setLoading(false);
     };
 
@@ -40,12 +25,11 @@ const Lsidebar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('currentUser');  // Also remove currentUser during logout
+    localStorage.removeItem('currentUser');
     window.location.href = '/login';
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
 
   return (
     <div className="bg-white w-64 h-screen fixed flex flex-col border-r shadow-md">
@@ -57,34 +41,67 @@ const Lsidebar = () => {
       {/* Navigation */}
       <nav className="flex-grow p-2">
         <ul className="space-y-2">
-          {/* Items for Client role */}
+
+          {/* Client Navigation */}
           {userRole === "client" && (
             <>
               <SidebarItem to="/dashboard/clientoverview" icon={<FaChartBar />} label="Client Overview" />
-              <SidebarItem to="/dashboard/clienttasks" icon={<FaCog />} label="Client Tasks" />
+              <SidebarItem to="/dashboard/clienttasks" icon={<FaTasks />} label="Client Tasks" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
             </>
           )}
 
-          {/* Items for Employee role */}
+          {/* Employee Navigation */}
           {userRole === "employee" && (
             <>
               <SidebarItem to="/dashboard/stats" icon={<FaChartBar />} label="Overview" />
               <SidebarItem to="/dashboard/product" icon={<FaBoxes />} label="Inventory" />
               <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
-              <SidebarItem to="/dashboard/task" icon={<FaCog />} label="Task" />
-              <SidebarItem to="/dashboard/marketing" icon={<FaCog />} label="Marketing" />
+              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
               <SidebarItem to="/dashboard/settings" icon={<FaCog />} label="Settings" />
             </>
           )}
 
-          {/* Items for Admin role */}
+          {/* Admin Navigation */}
           {userRole === "admin" && (
             <>
               <SidebarItem to="/dashboard/listuser" icon={<FaUsers />} label="Manage Users" />
-              <SidebarItem to="/dashboard/project" icon={<FaCog />} label="Project" />
-              <SidebarItem to="/dashboard/adminproduct" icon={<FaCog />} label="Products" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
+              
             </>
           )}
+
+          {/* Manager Navigation */}
+          {userRole === "manager" && (
+            <>
+              <SidebarItem to="/dashboard/manageroverview" icon={<FaChartBar />} label="Manager Overview" />
+              <SidebarItem to="/dashboard/project" icon={<FaBriefcase />} label="Manage Projects" />
+              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
+            </>
+          )}
+
+          {/* Finance Navigation */}
+          {userRole === "finance" && (
+            <>
+              <SidebarItem to="/dashboard/financeoverview" icon={<FaChartBar />} label="Finance Overview" />
+              <SidebarItem to="/dashboard/adminproduct" icon={<FaBoxes />} label="Products" />
+              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
+            </>
+          )}
+
+          {/* Marketing Navigation */}
+          {userRole === "marketing" && (
+            <>
+              <SidebarItem to="/dashboard/marketingoverview" icon={<FaChartBar />} label="Marketing Overview" />
+              <SidebarItem to="/dashboard/marketing" icon={<FaBullhorn />} label="Campaigns" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
+              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
+              <SidebarItem to="/dashboard/ads" icon={<FaBullhorn />} label="Ad Management" />
+            </>
+          )}
+
         </ul>
       </nav>
 
@@ -98,18 +115,16 @@ const Lsidebar = () => {
   );
 };
 
-const SidebarItem = ({ to, icon, label }) => {
-  return (
-    <li>
-      <NavLink
-        to={to}
-        className="flex items-center space-x-3 text-gray-700 p-2 rounded-md hover:bg-gray-100"
-        activeClassName="font-semibold text-green-600"
-      >
-        {icon} <span>{label}</span>
-      </NavLink>
-    </li>
-  );
-};
+const SidebarItem = ({ to, icon, label }) => (
+  <li>
+    <NavLink
+      to={to}
+      className="flex items-center space-x-3 text-gray-700 p-2 rounded-md hover:bg-gray-100"
+      activeClassName="font-semibold text-green-600"
+    >
+      {icon} <span>{label}</span>
+    </NavLink>
+  </li>
+);
 
 export default Lsidebar;
