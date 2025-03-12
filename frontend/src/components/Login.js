@@ -31,6 +31,15 @@ const Login = () => {
         case 'employee':
           navigate("/dashboard/stats");
           break;
+          case 'manager':
+            navigate("/dashboard/tasks");
+            break;
+            case 'finance':
+              navigate("/dashboard/financeoverview");
+              break;
+              case 'marketing':
+                navigate("/dashboard/marketingoverview");
+                break;
         default:
           navigate("/dashboard");
       }

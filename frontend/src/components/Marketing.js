@@ -200,7 +200,7 @@ const Marketing = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {campaigns.map(campaign => (
             <div 
-              key={campaign.id} 
+              key={campaign._id} 
               className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
             >
               <div className="p-6">
@@ -213,7 +213,7 @@ const Marketing = () => {
                 <p className="text-gray-600 mb-4">{campaign.description}</p>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-2xl font-bold">{campaign.visits}</p>
+                    <p className="text-2xl font-bold">{campaign.visits ? campaign.visits.length : 0}</p>
                     <p className="text-gray-500">Visits</p>
                   </div>
                   <div className="w-16 h-16 relative">
@@ -231,7 +231,7 @@ const Marketing = () => {
                         className="text-orange-400"
                         strokeWidth="5"
                         strokeDasharray="188.5"
-                        strokeDashoffset={188.5 - (188.5 * campaign.conversions / campaign.visits)}
+                        strokeDashoffset={188.5 - (188.5 * (campaign.conversations ? campaign.conversations.length : 0) / (campaign.visits ? campaign.visits.length : 1))}
                         strokeLinecap="round"
                         stroke="currentColor"
                         fill="transparent"
@@ -242,14 +242,18 @@ const Marketing = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{campaign.conversions}</p>
+                    <p className="text-2xl font-bold">{campaign.conversations ? campaign.conversations.length : 0}</p>
                     <p className="text-gray-500">Conversions</p>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Status: <span className="text-gray-700 font-medium capitalize">{campaign.status}</span></span>
-                    <span className="text-gray-500">Schedule: <span className="text-gray-700 font-medium capitalize">{Object.keys(campaign.schedule).find(key => campaign.schedule[key])}</span></span>
+                    <span className="text-gray-500">Schedule: <span className="text-gray-700 font-medium capitalize">
+                      {campaign.schedule && typeof campaign.schedule === 'object' 
+                        ? Object.keys(campaign.schedule).find(key => campaign.schedule[key]) || 'None'
+                        : campaign.schedule}
+                    </span></span>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,3 @@
-// models/Campaign.js
 const mongoose = require('mongoose');
 
 const campaignSchema = new mongoose.Schema({
@@ -24,13 +23,29 @@ const campaignSchema = new mongoose.Schema({
     monthly: { type: Boolean, default: false },
     quarterly: { type: Boolean, default: false },
   },
+  status: {
+    type: String,
+    enum: ["active", "inactive", "completed", "paused"],
+    default: "active",
+  },
   visits: {
-    type: Number,
-    default: 0,
+    type: [{
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      timestamp: { type: Date, default: Date.now },
+    }],
+    default: [],  // Initialize as empty array by default
+  },
+  conversations: {
+    type: [{
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      message: { type: String, required: true },
+      timestamp: { type: Date, default: Date.now },
+    }],
+    default: [],  // Initialize as empty array by default
   },
   conversions: {
-    type: Number,
-    default: 0,
+    type: String,
+    
   },
 });
 

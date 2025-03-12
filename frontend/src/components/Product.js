@@ -1,14 +1,136 @@
-import React, { useState, useEffect } from 'react'; 
-import { FaSearch, FaPlus, FaArrowUp, FaChartLine } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaSearch, FaPlus } from 'react-icons/fa';
 import Modal from 'react-modal';
 import axios from 'axios';
 
 Modal.setAppElement('#root');
 
+const ProductForm = React.memo(({ onSubmit, title, submitText, formData, handleInputChange, handleImageChange, closeModal }) => (
+  <form onSubmit={onSubmit} className="space-y-4">
+    <h2 className="text-center text-xl font-medium">{title}</h2>
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm">Name</label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleInputChange}
+          className="w-full p-2 border rounded-lg"
+          required
+          maxLength={100}
+        />
+      </div>
+      <div>
+        <label className="block text-sm">Category</label>
+        <input
+          type="text"
+          name="category"
+          value={formData.category}
+          onChange={handleInputChange}
+          className="w-full p-2 border rounded-lg"
+          required
+          maxLength={50}
+        />
+      </div>
+      <div className="col-span-2">
+        <label className="block text-sm">Description</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleInputChange}
+          className="w-full p-2 border rounded-lg"
+          required
+          maxLength={500}
+        />
+      </div>
+      <div>
+        <label className="block text-sm">Vendor</label>
+        <input
+          type="text"
+          name="vendor"
+          value={formData.vendor}
+          onChange={handleInputChange}
+          className="w-full p-2 border rounded-lg"
+          required
+          maxLength={100}
+        />
+      </div>
+      <div>
+        <label className="block text-sm">Quantity</label>
+        <input
+          type="number"
+          name="quantity"
+          value={formData.quantity}
+          onChange={handleInputChange}
+          className="w-full p-2 border rounded-lg"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm">Price</label>
+        <input
+          type="number"
+          name="price"
+          value={formData.price}
+          onChange={handleInputChange}
+          className="w-full p-2 border rounded-lg"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm">Product Image</label>
+        <input
+          type="file"
+          name="image"
+          onChange={handleImageChange}
+          className="w-full p-2 border rounded-lg"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="isKG"
+          checked={formData.isKG}
+          onChange={handleInputChange}
+          className="w-5 h-5"
+        />
+        <label className="text-sm">Is in KG?</label>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="isDozen"
+          checked={formData.isDozen}
+          onChange={handleInputChange}
+          className="w-5 h-5"
+        />
+        <label className="text-sm">Is in Dozen?</label>
+      </div>
+    </div>
+    <div className="flex justify-center gap-4 mt-6">
+      <button
+        type="button"
+        onClick={closeModal}
+        className="px-4 py-2 bg-gray-300 text-black rounded-lg hover:bg-gray-400"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+      >
+        {submitText}
+      </button>
+    </div>
+  </form>
+));
+
 const Product = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [products, setProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -37,20 +159,20 @@ const Product = () => {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-  };
+  }, []);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = useCallback((e) => {
     setFormData(prev => ({
       ...prev,
       image: e.target.files[0]
     }));
-  };
+  }, []);
 
   const resetForm = () => {
     setFormData({
@@ -97,6 +219,7 @@ const Product = () => {
         setProducts(prev => [...prev, response.data.data]);
         resetForm();
         setIsAddModalOpen(false);
+        alert('Product added successfully!');
       }
     } catch (error) {
       console.error('Error adding product:', error);
@@ -120,7 +243,7 @@ const Product = () => {
       price: product.price,
       isKG: product.isKG,
       isDozen: product.isDozen,
-      image: product.image
+      image: null // Reset image to null for editing
     });
     setIsEditModalOpen(true);
   };
@@ -134,15 +257,18 @@ const Product = () => {
     }
 
     const formDataToSend = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key === 'image') {
-        if (formData[key] instanceof File) {
-          formDataToSend.append('image', formData[key]);
-        }
-      } else {
-        formDataToSend.append(key, formData[key]);
-      }
-    });
+    formDataToSend.append('name', formData.name);
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('category', formData.category);
+    formDataToSend.append('vendor', formData.vendor);
+    formDataToSend.append('quantity', Number(formData.quantity));
+    formDataToSend.append('price', Number(formData.price));
+    formDataToSend.append('isKG', formData.isKG);
+    formDataToSend.append('isDozen', formData.isDozen);
+    
+    if (formData.image instanceof File) {
+      formDataToSend.append('image', formData.image);
+    }
 
     try {
       const response = await axios.put(
@@ -186,134 +312,14 @@ const Product = () => {
     }
   };
 
-  const ProductForm = ({ onSubmit, title, submitText }) => (
-<form onSubmit={onSubmit} className="space-y-4">
-  <h2 className="text-center text-xl font-medium">{title}</h2>
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
-  {/* Two-column Grid Layout */}
-  <div className="grid grid-cols-2 gap-4">
-    <div>
-      <label className="block text-sm">Name</label>
-      <input
-        type="text"
-        name="name"
-        value={formData.name}
-        onChange={handleInputChange}
-        className="w-full p-2 border rounded-lg"
-        required
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm">Category</label>
-      <input
-        type="text"
-        name="category"
-        value={formData.category}
-        onChange={handleInputChange}
-        className="w-full p-2 border rounded-lg"
-        required
-      />
-    </div>
-
-    <div className="col-span-2">
-      <label className="block text-sm">Description</label>
-      <textarea
-        name="description"
-        value={formData.description}
-        onChange={handleInputChange}
-        className="w-full p-2 border rounded-lg"
-        required
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm">Vendor</label>
-      <input
-        type="text"
-        name="vendor"
-        value={formData.vendor}
-        onChange={handleInputChange}
-        className="w-full p-2 border rounded-lg"
-        required
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm">Quantity</label>
-      <input
-        type="number"
-        name="quantity"
-        value={formData.quantity}
-        onChange={handleInputChange}
-        className="w-full p-2 border rounded-lg"
-        required
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm">Price</label>
-      <input
-        type="number"
-        name="price"
-        value={formData.price}
-        onChange={handleInputChange}
-        className="w-full p-2 border rounded-lg"
-        required
-      />
-    </div>
-
-    <div>
-      <label className="block text-sm">Product Image</label>
-      <input
-        type="file"
-        onChange={handleImageChange}
-        className="w-full p-2 border rounded-lg"
-      />
-    </div>
-
-    {/* Checkboxes */}
-    <div className="flex items-center gap-2">
-      <input
-        type="checkbox"
-        name="isKG"
-        checked={formData.isKG}
-        onChange={handleInputChange}
-        className="w-5 h-5"
-      />
-      <label className="text-sm">Is in KG?</label>
-    </div>
-
-    <div className="flex items-center gap-2">
-      <input
-        type="checkbox"
-        name="isDozen"
-        checked={formData.isDozen}
-        onChange={handleInputChange}
-        className="w-5 h-5"
-      />
-      <label className="text-sm">Is in Dozen?</label>
-    </div>
-  </div>
-
-  {/* Buttons Below */}
-  <div className="flex justify-center gap-4 mt-6">
-    <button
-      type="button"
-      onClick={() => title === "Add Product" ? setIsAddModalOpen(false) : setIsEditModalOpen(false)}
-      className="px-4 py-2 bg-gray-300 text-black rounded-lg hover:bg-gray-400"
-    >
-      Cancel
-    </button>
-    <button
-      type="submit"
-      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-    >
-      {submitText}
-    </button>
-  </div>
-</form>
-
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.vendor.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -323,6 +329,8 @@ const Product = () => {
           <input
             type="text"
             placeholder="Search"
+            value={searchTerm}
+            onChange={handleSearch}
             className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
           />
           <FaSearch className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
@@ -339,7 +347,7 @@ const Product = () => {
       </div>
 
       <div className="space-y-4">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <div key={product._id} className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
             <div className="flex items-center gap-4">
               <img
@@ -385,6 +393,10 @@ const Product = () => {
           onSubmit={handleSubmit}
           title="Add Product"
           submitText="Add Product"
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleImageChange={handleImageChange}
+          closeModal={() => setIsAddModalOpen(false)}
         />
       </Modal>
 
@@ -399,6 +411,10 @@ const Product = () => {
           onSubmit={handleEditSubmit}
           title="Edit Product"
           submitText="Update Product"
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleImageChange={handleImageChange}
+          closeModal={() => setIsEditModalOpen(false)}
         />
       </Modal>
     </div>

@@ -17,6 +17,7 @@ import Invoice from './components/Invoice';
 import Pay from './components/Pay';
 import Marketing from './components/Marketing';
 import Task from './components/Task';
+import Tasks from './components/Tasks';
 import Project from './components/Project';
 import Expense from './components/Expense';
 import Product from './components/Product'
@@ -25,6 +26,7 @@ import ClientInformationForm from './components/ClientInformationForm';
 import AdminProductDetails from './components/AdminProductDetails';
 import AdminProductManagement from './components/AdminProductManagement';
 import ClientOverview from './components/ClientOverview';
+import UserCampaigns from './components/UserCampaigns';
 
 function App() {
   return (
@@ -47,6 +49,8 @@ function App() {
           <Route  path="pay" element={<Pay/>} />
           <Route  path="marketing" element={<Marketing/>} />
           <Route  path="task" element={<Task/>} />
+          <Route  path="tasks" element={<Tasks/>} />
+          <Route  path="usercampaign" element={<UserCampaigns/>} />
           <Route  path="project" element={<Project/>} />
           <Route  path="expense" element={<Expense/>} />
           <Route  path="chat" element={<Chat/>} />

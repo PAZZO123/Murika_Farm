@@ -46,6 +46,7 @@ const Lsidebar = () => {
           {userRole === "client" && (
             <>
               <SidebarItem to="/dashboard/clientoverview" icon={<FaChartBar />} label="Client Overview" />
+              <SidebarItem to="/dashboard/usercampaign" icon={<FaChartBar />} label="campaigns" />
               <SidebarItem to="/dashboard/clienttasks" icon={<FaTasks />} label="Client Tasks" />
               <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
             </>
@@ -74,9 +75,9 @@ const Lsidebar = () => {
           {/* Manager Navigation */}
           {userRole === "manager" && (
             <>
-              <SidebarItem to="/dashboard/manageroverview" icon={<FaChartBar />} label="Manager Overview" />
+              <SidebarItem to="/dashboard/tasks" icon={<FaChartBar />} label="Manager Overview" />
               <SidebarItem to="/dashboard/project" icon={<FaBriefcase />} label="Manage Projects" />
-              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
+              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="My Task" />
               <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
             </>
           )}
