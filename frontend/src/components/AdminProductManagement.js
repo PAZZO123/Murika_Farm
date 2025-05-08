@@ -594,7 +594,7 @@ const AdminProductManagement = () => {
                 </span>
               </div>
               <div className="text-xs text-gray-500">
-                {new Date(product.createdAt).toLocaleDateString()}
+                {new Date(product.harvestTime).toLocaleDateString()}
               </div>
             </div>
 

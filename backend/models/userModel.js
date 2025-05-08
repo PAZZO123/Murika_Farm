@@ -33,9 +33,9 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["admin", "employee", "client","manager","finance","marketing"], // Restrict role to "admin" and "employee"
+    enum: ["admin", "employee", "client","manager","finance","marketing"], 
     required: true,
-    default: "employee", // Default to "employee" if no role is specified
+    default: "employee", 
   }
 });
 

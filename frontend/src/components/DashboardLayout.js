@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { FaChevronDown } from "react-icons/fa";
+import { FaChevronDown, FaUser } from "react-icons/fa";
 import axios from "axios";
 import Lsidebar from "./Lsidebar";
 
@@ -61,6 +61,7 @@ const DashboardLayout = () => {
               className="flex items-center space-x-3 cursor-pointer bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
+               <FaUser className="text-gray-500 text-xs" />
               <div className="text-sm font-semibold">
                 {user?.firstName || "Loading..."}
               </div>
@@ -70,6 +71,7 @@ const DashboardLayout = () => {
             {/* Dropdown Menu */}
             {dropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-40 bg-white shadow-md rounded-md border">
+                
                 <div className="px-4 py-2 text-gray-700">{user?.role || "User"}</div>
                 <hr />
                 <button

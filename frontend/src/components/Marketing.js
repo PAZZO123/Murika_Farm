@@ -25,6 +25,7 @@ const Marketing = () => {
     schedule: 'all',
     status: 'all'
   });
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -172,6 +173,42 @@ const Marketing = () => {
     </Modal>
   );
 
+  const ConversationsModal = () => (
+    <Modal isOpen={!!selectedCampaign} onClose={() => setSelectedCampaign(null)}>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">
+            {selectedCampaign?.title} - Conversations
+          </h2>
+          <button onClick={() => setSelectedCampaign(null)}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          {selectedCampaign?.conversations?.length ? (
+            selectedCampaign.conversations.map((conversation) => (
+              <div 
+                key={conversation._id} 
+                className="p-4 bg-gray-50 rounded-lg"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{conversation.message}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(conversation.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-4">No conversations yet</p>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
@@ -183,13 +220,13 @@ const Marketing = () => {
             <Filter className="w-4 h-4" />
             Filter
           </button>
-          <button
-            className="bg-orange-400 text-white px-4 py-2 rounded-lg hover:bg-orange-500 transition-colors"
-            onClick={() => setShowModal(true)}
-          >
-            Add Campaign
-          </button>
         </div>
+        <button
+          className="bg-orange-400 text-white px-4 py-2 rounded-lg hover:bg-orange-500 transition-colors ml-auto"
+          onClick={() => setShowModal(true)}
+        >
+          Add Campaign
+        </button>
       </div>
 
       {loading ? (
@@ -231,7 +268,7 @@ const Marketing = () => {
                         className="text-orange-400"
                         strokeWidth="5"
                         strokeDasharray="188.5"
-                        strokeDashoffset={188.5 - (188.5 * (campaign.conversations ? campaign.conversations.length : 0) / (campaign.visits ? campaign.visits.length : 1))}
+                        strokeDashoffset={188.5 - (188.5 * (campaign.conversations ? campaign.conversations.length : 0) / (campaign.visits ? Math.max(campaign.visits.length, 1) : 1))}
                         strokeLinecap="round"
                         stroke="currentColor"
                         fill="transparent"
@@ -241,9 +278,12 @@ const Marketing = () => {
                       />
                     </svg>
                   </div>
-                  <div>
+                  <div 
+                    className="cursor-pointer hover:text-orange-400 transition-colors"
+                    onClick={() => setSelectedCampaign(campaign)}
+                  >
                     <p className="text-2xl font-bold">{campaign.conversations ? campaign.conversations.length : 0}</p>
-                    <p className="text-gray-500">Conversions</p>
+                    <p className="text-gray-500">Conversations</p>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100">
@@ -267,41 +307,63 @@ const Marketing = () => {
         <div className="p-6">
           <h2 className="text-xl font-semibold text-center mb-6">Add Campaign</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              name="title"
-              placeholder="Campaign Title"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-orange-400"
-              value={formData.title}
-              onChange={handleInputChange}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                Campaign Title
+              </label>
               <input
-                type="date"
-                name="startDate"
-                placeholder="Start Date"
+                type="text"
+                name="title"
+                id="title"
+                placeholder="Enter campaign title"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-orange-400"
-                value={formData.startDate}
-                onChange={handleInputChange}
-              />
-              <input
-                type="date"
-                name="endDate"
-                placeholder="End Date"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-orange-400"
-                value={formData.endDate}
+                value={formData.title}
                 onChange={handleInputChange}
               />
             </div>
 
-            <textarea
-              name="description"
-              placeholder="Campaign Description"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-orange-400 h-24 resize-none"
-              value={formData.description}
-              onChange={handleInputChange}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  id="startDate"
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-orange-400"
+                  value={formData.startDate}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  id="endDate"
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-orange-400"
+                  value={formData.endDate}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Campaign Description
+              </label>
+              <textarea
+                name="description"
+                id="description"
+                placeholder="Enter campaign description"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-orange-400 h-24 resize-none"
+                value={formData.description}
+                onChange={handleInputChange}
+              />
+            </div>
 
             <div>
               <p className="text-gray-600 mb-2">Schedule</p>
@@ -334,6 +396,7 @@ const Marketing = () => {
       </Modal>
 
       <FilterModal />
+      <ConversationsModal />
     </div>
   );
 };

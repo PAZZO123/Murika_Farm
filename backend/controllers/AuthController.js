@@ -13,7 +13,7 @@ exports.insertAdminUser = async () => {
         firstName: 'Admin',
         lastName: 'User',
         username: 'admin',
-        email: 'admin@example.com',
+        email: 'admin@mulika.com',
         phone: '123456789',
         password: hashedPassword,
         role: 'admin',

@@ -3,7 +3,9 @@ import { NavLink } from "react-router-dom";
 import logo from "../Assets/Logo.png";
 import { 
   FaChartBar, FaBoxes, FaCog, FaUsers, FaSignOutAlt, 
-  FaBriefcase, FaMoneyBillWave, FaBullhorn, FaTasks 
+  FaBriefcase, FaMoneyBillWave, FaBullhorn, FaTasks,
+  FaCommentAlt, FaShoppingBag, FaUserCog, FaProjectDiagram,
+  FaChartLine, FaAd, FaClipboardList, FaWarehouse
 } from "react-icons/fa";
 
 const Lsidebar = () => {
@@ -45,10 +47,9 @@ const Lsidebar = () => {
           {/* Client Navigation */}
           {userRole === "client" && (
             <>
-              <SidebarItem to="/dashboard/clientoverview" icon={<FaChartBar />} label="Client Overview" />
-              <SidebarItem to="/dashboard/usercampaign" icon={<FaChartBar />} label="campaigns" />
-              <SidebarItem to="/dashboard/clienttasks" icon={<FaTasks />} label="Client Tasks" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
+              <SidebarItem to="/dashboard/clientoverview" icon={<FaChartLine />} label="Client Overview" />
+              <SidebarItem to="/dashboard/usercampaign" icon={<FaBullhorn />} label="Campaigns" />
+              <SidebarItem to="/dashboard/clienttasks" icon={<FaShoppingBag />} label="Add Product" />
             </>
           )}
 
@@ -57,8 +58,8 @@ const Lsidebar = () => {
             <>
               <SidebarItem to="/dashboard/stats" icon={<FaChartBar />} label="Overview" />
               <SidebarItem to="/dashboard/product" icon={<FaBoxes />} label="Inventory" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
-              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
+              <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
               <SidebarItem to="/dashboard/settings" icon={<FaCog />} label="Settings" />
             </>
           )}
@@ -66,40 +67,38 @@ const Lsidebar = () => {
           {/* Admin Navigation */}
           {userRole === "admin" && (
             <>
-              <SidebarItem to="/dashboard/listuser" icon={<FaUsers />} label="Manage Users" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
-              
+              <SidebarItem to="/dashboard/listuser" icon={<FaUserCog />} label="Manage Users" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
             </>
           )}
 
           {/* Manager Navigation */}
           {userRole === "manager" && (
             <>
-              <SidebarItem to="/dashboard/tasks" icon={<FaChartBar />} label="Manager Overview" />
-              <SidebarItem to="/dashboard/project" icon={<FaBriefcase />} label="Manage Projects" />
-              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="My Task" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
+              <SidebarItem to="/dashboard/tasks" icon={<FaChartLine />} label="Manager Overview" />
+              <SidebarItem to="/dashboard/project" icon={<FaProjectDiagram />} label="Manage Projects" />
+              <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="My Task" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
             </>
           )}
 
           {/* Finance Navigation */}
           {userRole === "finance" && (
             <>
-              <SidebarItem to="/dashboard/financeoverview" icon={<FaChartBar />} label="Finance Overview" />
-              <SidebarItem to="/dashboard/adminproduct" icon={<FaBoxes />} label="Products" />
-              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
+              <SidebarItem to="/dashboard/financeoverview" icon={<FaMoneyBillWave />} label="Finance Overview" />
+              <SidebarItem to="/dashboard/adminproduct" icon={<FaWarehouse />} label="Products" />
+              <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
             </>
           )}
 
           {/* Marketing Navigation */}
           {userRole === "marketing" && (
             <>
-              <SidebarItem to="/dashboard/marketingoverview" icon={<FaChartBar />} label="Marketing Overview" />
-              <SidebarItem to="/dashboard/marketing" icon={<FaBullhorn />} label="Campaigns" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCog />} label="Chat" />
-              <SidebarItem to="/dashboard/task" icon={<FaTasks />} label="Task" />
-              <SidebarItem to="/dashboard/ads" icon={<FaBullhorn />} label="Ad Management" />
+              <SidebarItem to="/dashboard/marketing" icon={<FaChartLine />} label="Marketing Overview" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
+              <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
+              <SidebarItem to="/dashboard/ads" icon={<FaAd />} label="Ad Management" />
             </>
           )}
 

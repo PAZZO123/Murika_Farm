@@ -38,7 +38,7 @@ const Login = () => {
               navigate("/dashboard/financeoverview");
               break;
               case 'marketing':
-                navigate("/dashboard/marketingoverview");
+                navigate("/dashboard/marketing");
                 break;
         default:
           navigate("/dashboard");
