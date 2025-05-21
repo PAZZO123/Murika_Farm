@@ -9,6 +9,7 @@ import {
   UserCog,
   User
 } from 'lucide-react';
+import Logo from '../Assets/Logo.png'; // Import the logo
 
 const LandingPage = () => {
   const features = [
@@ -37,7 +38,18 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-green-50">
       {/* Hero Section */}
-      <div className="container mx-auto px-4 pt-20">
+      <div className="container mx-auto px-4 pt-12"> 
+        {/* Logo Container */}
+        <div className="flex justify-center mb-8">
+          <div className="rounded-full overflow-hidden w-100 h-100 border-4 border-green-100 shadow-lg">
+            <img 
+              src={Logo} 
+              alt="Mulika Logo" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+        
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
            Mulika <span className="text-green-600">MANAGEMENT SYSTEM</span>

@@ -82,7 +82,6 @@ const Project = () => {
       setShowModal(false);
       setNewProject({
         title: "",
-        type: "",
         startDate: "",
         endDate: "",
         description: "",
@@ -281,7 +280,7 @@ const Project = () => {
                       checked={newProject.teamMembers.includes(user._id)}
                       onChange={() => handleCheckboxChange(user._id)}
                     />
-                    <span>{`${user.firstName || ''} ${user.lastName || ''} (${user.email})`}</span>
+                    <span>{`${user.firstName || ''} ${user.lastName || ''} (${user.role})`}</span>
                   </label>
                 ))}
               </div>

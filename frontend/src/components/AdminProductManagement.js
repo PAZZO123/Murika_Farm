@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -267,7 +269,27 @@ const AdminProductManagement = () => {
         });
     }
   };
-
+  const exportProductsAsPDF = () => {
+    const doc = new jsPDF();
+    const tableColumn = ["Product Name", "Type", "Price", "Location", "Cooperative", "Status"];
+    const tableRows = [];
+    filteredProducts.forEach(product => {
+      const productData = [
+        product.names,
+        product.productType,
+        product.priceSoldAt,
+        product.location,
+        product.cooperativeName,
+        product.status,
+      ];
+      tableRows.push(productData);
+    });
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+    });
+    doc.save("products.pdf");
+  };
   const exportProducts = () => {
     const exportData = filteredProducts.map((p) => ({
       "Product Name": p.names,
@@ -421,7 +443,7 @@ const AdminProductManagement = () => {
 
     <div className="flex space-x-2 mt-4 sm:mt-0">
       <button
-        onClick={exportProducts}
+        onClick={exportProductsAsPDF}
         className="px-4 py-2 bg-blue-600 text-white rounded flex items-center hover:bg-blue-700"
       >
         <FaDownload className="mr-2" /> Export

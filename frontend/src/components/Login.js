@@ -35,7 +35,7 @@ const Login = () => {
             navigate("/dashboard/tasks");
             break;
             case 'finance':
-              navigate("/dashboard/financeoverview");
+              navigate("/dashboard/adminproduct");
               break;
               case 'marketing':
                 navigate("/dashboard/marketing");

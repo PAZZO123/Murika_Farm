@@ -9,7 +9,8 @@ const projectSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ["Ongoing", "Completed","Todo"], 
-    required: true,
+    default: "Todo",
+   
   },
   description: {
     type: String,

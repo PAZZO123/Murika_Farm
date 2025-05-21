@@ -85,8 +85,8 @@ const Lsidebar = () => {
           {/* Finance Navigation */}
           {userRole === "finance" && (
             <>
-              <SidebarItem to="/dashboard/financeoverview" icon={<FaMoneyBillWave />} label="Finance Overview" />
-              <SidebarItem to="/dashboard/adminproduct" icon={<FaWarehouse />} label="Products" />
+             
+              <SidebarItem to="/dashboard/adminproduct" icon={<FaWarehouse />} label="Finance Overview" />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
               <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
             </>
