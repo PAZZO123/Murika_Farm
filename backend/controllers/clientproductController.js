@@ -1,5 +1,6 @@
 // controllers/productController.js
 const ClientProduct = require("../models/ClientProduct");
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 // Create a new product with an image
 exports.createProduct = async (req, res) => {
@@ -138,13 +139,11 @@ exports.updateProductStatus = async (req, res) => {
 
     let updateData = { status };
 
-    // If status is accepted, initialize payment details
     if (status === 'accepted') {
       updateData.acceptedDate = new Date();
       updateData.paymentStatus = 'pending';
     }
 
-    // If status is paid, update payment details
     if (status === 'paid') {
       if (!paymentAmount) {
         return res.status(400).json({
@@ -179,6 +178,75 @@ exports.updateProductStatus = async (req, res) => {
       success: false,
       error: "Server Error"
     });
+  }
+};
+
+// Add new Stripe payment endpoint
+exports.createPaymentIntent = async (req, res) => {
+  try {
+    const { productId, amount, currency = 'usd' } = req.body;
+
+    // Verify the product exists
+    const product = await ClientProduct.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Stripe uses cents
+      currency: currency,
+      metadata: {
+        productId: productId,
+        userId: product.userId.toString()
+      }
+    });
+
+    res.status(200).json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id
+    });
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Add endpoint to confirm payment and update product status
+exports.confirmPayment = async (req, res) => {
+  try {
+    const { paymentIntentId, productId } = req.body;
+
+    // Verify the payment with Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({ error: 'Payment not succeeded' });
+    }
+
+    // Update the product status
+    const product = await ClientProduct.findByIdAndUpdate(
+      productId,
+      {
+        status: 'paid',
+        paymentStatus: 'completed',
+        paymentAmount: paymentIntent.amount / 100, // Convert back to dollars
+        paymentDate: new Date()
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      product
+    });
+  } catch (error) {
+    console.error('Error confirming payment:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 

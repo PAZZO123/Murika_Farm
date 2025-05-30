@@ -67,9 +67,10 @@ const ClientOverview = () => {
       setProducts(response.data);
       calculateStatistics(response.data);
       prepareChartData(response.data);
-      setError(null);
+      setError(null); // Clear any previous errors
     } catch (error) {
       console.error("Error fetching products:", error);
+      // Set error only for actual fetching issues, not for empty data
       setError("Failed to load dashboard data. Please try again later.");
     } finally {
       setLoading(false);
@@ -77,14 +78,30 @@ const ClientOverview = () => {
   };
 
   const calculateStatistics = (data) => {
+    if (!data || data.length === 0) {
+      setStatistics({
+        totalFarmers: 0,
+        totalCooperatives: 0,
+        avgPrice: 0,
+        needsLogistics: 0,
+        totalProducts: 0,
+        upcomingHarvests: 0,
+        activeLocations: 0,
+        totalContacts: 0
+      });
+      return;
+    }
+
     const uniqueFarmers = new Set(data.map(p => p.id)).size;
     const uniqueCoops = new Set(data.map(p => p.cooperativeName)).size;
     const uniqueLocations = new Set(data.map(p => p.location)).size;
-    const totalPrice = data.reduce((sum, p) => sum + Number(p.priceSoldAt), 0);
+    const totalPrice = data.reduce((sum, p) => sum + Number(p.priceSoldAt || 0), 0);
     const logisticsCount = data.filter(p => p.needLogistic).length;
-    const uniqueContacts = new Set([...data.map(p => p.phoneNumber), ...data.map(p => p.email)]).size;
+    const uniqueContacts = new Set([
+      ...data.map(p => p.phoneNumber).filter(Boolean), 
+      ...data.map(p => p.email).filter(Boolean)
+    ]).size;
 
-    // Calculate upcoming harvests (within next 30 days)
     const today = new Date();
     const upcomingHarvests = data.filter(p => {
       const harvestDate = new Date(p.harvestTime);
@@ -95,7 +112,7 @@ const ClientOverview = () => {
     setStatistics({
       totalFarmers: uniqueFarmers,
       totalCooperatives: uniqueCoops,
-      avgPrice: (totalPrice / data.length).toFixed(2),
+      avgPrice: data.length > 0 ? (totalPrice / data.length).toFixed(2) : 0,
       needsLogistics: logisticsCount,
       totalProducts: data.length,
       upcomingHarvests,
@@ -105,19 +122,25 @@ const ClientOverview = () => {
   };
 
   const prepareChartData = (data) => {
-    // Product Types Distribution
+    if (!data || data.length === 0) {
+      setCharts({
+        productTypes: [],
+        locationData: [],
+        harvestTiming: []
+      });
+      return;
+    }
+
     const productTypes = data.reduce((acc, p) => {
       acc[p.productType] = (acc[p.productType] || 0) + 1;
       return acc;
     }, {});
 
-    // Location Distribution
     const locations = data.reduce((acc, p) => {
       acc[p.location] = (acc[p.location] || 0) + 1;
       return acc;
     }, {});
 
-    // Harvest Timing Distribution
     const harvestMonths = data.reduce((acc, p) => {
       const month = new Date(p.harvestTime).toLocaleString('default', { month: 'long' });
       acc[month] = (acc[month] || 0) + 1;
@@ -198,7 +221,7 @@ const ClientOverview = () => {
         />
         <StatCard 
           title="Need Logistics" 
-          value={`${statistics.needsLogistics} (${Math.round(statistics.needsLogistics/statistics.totalProducts*100)}%)`} 
+          value={`${statistics.needsLogistics} ${statistics.totalProducts > 0 ? `(${Math.round(statistics.needsLogistics/statistics.totalProducts*100)}%)` : ''}`} 
           icon={Truck}
           colorClass="border-purple-500"
         />
@@ -232,28 +255,32 @@ const ClientOverview = () => {
       <div className="bg-white rounded-lg shadow-md p-4">
         <h3 className="text-lg font-semibold mb-4">Latest Products</h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left">Farmer</th>
-                <th className="px-4 py-2 text-left">Product</th>
-                <th className="px-4 py-2 text-left">Location</th>
-                <th className="px-4 py-2 text-left">Harvest Time</th>
-                <th className="px-4 py-2 text-right">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.slice(0, 5).map((product) => (
-                <tr key={product._id} className="border-t">
-                  <td className="px-4 py-2">{product.names}</td>
-                  <td className="px-4 py-2">{product.productType}</td>
-                  <td className="px-4 py-2">{product.location}</td>
-                  <td className="px-4 py-2">{new Date(product.harvestTime).toLocaleDateString()}</td>
-                  <td className="px-4 py-2 text-right">${product.priceSoldAt}</td>
+          {products.length > 0 ? (
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left">Farmer</th>
+                  <th className="px-4 py-2 text-left">Product</th>
+                  <th className="px-4 py-2 text-left">Location</th>
+                  <th className="px-4 py-2 text-left">Harvest Time</th>
+                  <th className="px-4 py-2 text-right">Price</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.slice(0, 5).map((product) => (
+                  <tr key={product._id} className="border-t">
+                    <td className="px-4 py-2">{product.names}</td>
+                    <td className="px-4 py-2">{product.productType}</td>
+                    <td className="px-4 py-2">{product.location}</td>
+                    <td className="px-4 py-2">{new Date(product.harvestTime).toLocaleDateString()}</td>
+                    <td className="px-4 py-2 text-right">${product.priceSoldAt}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-gray-500">No product data available.</p>
+          )}
         </div>
       </div>
 
@@ -261,70 +288,82 @@ const ClientOverview = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <ChartCard title="Product Distribution">
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={charts.productTypes}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                >
-                  {charts.productTypes.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS.success[index % COLORS.success.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
+            {charts.productTypes.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={charts.productTypes}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                  >
+                    {charts.productTypes.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS.success[index % COLORS.success.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
             </ResponsiveContainer>
+            ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">No product type data to display.</div>
+            )}
           </div>
         </ChartCard>
 
         <ChartCard title="Geographical Distribution">
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={charts.locationData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                >
-                  {charts.locationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS.primary[index % COLORS.primary.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            {charts.locationData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={charts.locationData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                  >
+                    {charts.locationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS.primary[index % COLORS.primary.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">No geographical data to display.</div>
+            )}
           </div>
         </ChartCard>
 
         <ChartCard title="Harvest Distribution">
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={charts.harvestTiming}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                >
-                  {charts.harvestTiming.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS.warning[index % COLORS.warning.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            {charts.harvestTiming.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={charts.harvestTiming}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                  >
+                    {charts.harvestTiming.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS.warning[index % COLORS.warning.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">No harvest timing data to display.</div>
+            )}
           </div>
         </ChartCard>
       </div>

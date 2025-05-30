@@ -68,7 +68,7 @@ const LandingPage = () => {
             </button>
             <button className="group flex items-center space-x-2 bg-white text-green-600 border-2 border-green-600 py-3 px-8 rounded-lg hover:bg-green-50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
               <User className="w-5 h-5" />
-              <span><Link to="/signup">Go as Client</Link></span>
+              <span><Link to="/signup">Go as Vendor</Link></span>
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>

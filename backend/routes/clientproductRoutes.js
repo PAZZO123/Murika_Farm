@@ -5,6 +5,8 @@ const upload = require("../Middlewares/multerConfig");
 
 // Create a new product with image upload
 router.post("/clientproducts", upload.single("image"), clientproductController.createProduct);
+router.post('/clientproducts/create-payment-intent', clientproductController.createPaymentIntent);
+router.post('/clientproducts/confirm-payment', clientproductController.confirmPayment);
 
 // Get all products
 router.get("/clientproducts", clientproductController.getAllProducts);
