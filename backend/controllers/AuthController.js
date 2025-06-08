@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const config = require('../config/config');
+const transporter = require('../config/emailConfig');
 
 // Insert Admin User
 exports.insertAdminUser = async () => {
@@ -28,10 +29,11 @@ exports.insertAdminUser = async () => {
   }
 };
 
+
 // User Signup
 exports.signUp = async (req, res) => {
   try {
-    const { password, role } = req.body;
+    const { password, role, email } = req.body;
     const allowedRoles = ['employee', 'finance', 'manager', 'marketing'];
 
     if (role && allowedRoles.includes(role.toLowerCase())) {
@@ -41,8 +43,36 @@ exports.signUp = async (req, res) => {
         role: role.toLowerCase(),
         password: hashedPassword,
       });
+
       await newUser.save();
-      res.status(201).json({ message: `${role} created successfully` });
+
+      // Send email with credentials
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Your Account Credentials',
+        html: `
+          <h2>Welcome to Our mulika platform! as our internal staff</h2>
+          <p>Your account has been created by the administrator.</p>
+          <p>Here are your login credentials:</p>
+          <ul>
+            <li><strong>Username:</strong> ${newUser.username}</li>
+            <li><strong>Password:</strong> ${password}</li>
+            <li><strong>Role:</strong> ${role}</li>
+          </ul>
+         
+        `
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending email:', error);
+        } else {
+          console.log('Email sent:', info.response);
+        }
+      });
+
+      res.status(201).json({ message: `${role} created successfully and credentials sent to email` });
     } else {
       res.status(403).json({ error: 'Invalid role or unauthorized access. Only admin can create staff members.' });
     }

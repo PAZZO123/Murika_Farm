@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import LandingPage from './components/LandingPage';
-import Join from './components/Product';
+import Join from './components/ProductInventory';
 import Signup from './components/Signup';
 import Login from './components/Login';
 import Sidebar from './components/Sidebar';
@@ -18,8 +18,7 @@ import Marketing from './components/Marketing';
 import Task from './components/Task';
 import Tasks from './components/Tasks';
 import Project from './components/Project';
-import Expense from './components/Expense';
-import Product from './components/Product';
+import ExpenseRecorder from './components/ExpenseRecorder';
 import Chat from './components/Chat';
 import ClientInformationForm from './components/ClientInformationForm';
 import AdminProductDetails from './components/AdminProductDetails';
@@ -29,6 +28,8 @@ import UserCampaigns from './components/UserCampaigns';
 import ProductDetail from './components/ProductDetail';
 import EditProduct from './components/EditProduct';
 import ProductList from './components/ProductList';
+import AdminDashboard from './components/AdminDashboard';
+import ProductInventory from './components/ProductInventory';
 
 // Initialize Stripe with your publishable key
 const stripePromise = (async () => {
@@ -59,10 +60,11 @@ function App() {
           <Route path="/login" element={<Login/>} />
           
           <Route path="/dashboard" element={<DashboardLayout/>}>
+          <Route path="overview" element={<AdminDashboard />} />
             <Route path="welcome" element={<WelcomeUser/>} />
             <Route path="listuser" element={<UserManagement/>} />
             <Route path="stats" element={<Statistics/>} />
-            <Route path="expenses" element={<Expenses/>} />
+            <Route path="expenses" element={<ExpenseRecorder />} />
             <Route path="invoice" element={<Invoice/>} />
             <Route path="pay" element={<Pay/>} />
             <Route path="marketing" element={<Marketing/>} />
@@ -70,9 +72,9 @@ function App() {
             <Route path="tasks" element={<Tasks/>} />
             <Route path="usercampaign" element={<UserCampaigns/>} />
             <Route path="project" element={<Project/>} />
-            <Route path="expense" element={<Expense/>} />
+           
             <Route path="chat" element={<Chat/>} />
-            <Route path="product" element={<Product/>} /> 
+            <Route path="product" element={<ProductInventory/>} /> 
             <Route path="clienttasks" element={<ClientInformationForm/>} /> 
             <Route path="products/:id" element={<ProductDetail />} />
             <Route path="products/edit/:id" element={<EditProduct />} />

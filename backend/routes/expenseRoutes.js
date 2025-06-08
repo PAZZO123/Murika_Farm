@@ -1,35 +1,22 @@
-// routes/expenseRoutes.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
 const expenseController = require('../controllers/expenseController');
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage: storage });
-
-// Create a new expense with file upload
-router.post('/expenses', upload.single('attachment'), expenseController.createExpense);
+// You might want to add authentication middleware here if you have one
+// const auth = require('../middleware/auth'); // Example auth middleware
 
 // Get all expenses
-router.get('/expenses', expenseController.getAllExpenses);
+router.get('/expenses', expenseController.getAllExpenses); // No ID needed for all
 
-// Get a single expense by ID
-router.get('/expenses/:id', expenseController.getExpenseById);
+// Get single expense
+router.get('/expenses/:id', expenseController.getExpense);
 
-// Update an expense
-router.put('/expenses/:id', upload.single('attachment'), expenseController.updateExpense);
+// Create expense
+router.post('/expenses', expenseController.createExpense);
 
-// Delete an expense
+// Update expense
+router.put('/expenses/:id', expenseController.updateExpense);
+
+// Delete expense
 router.delete('/expenses/:id', expenseController.deleteExpense);
 
 module.exports = router;

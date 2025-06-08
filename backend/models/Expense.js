@@ -1,13 +1,41 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const ExpenseSchema = new mongoose.Schema(
-    {
-  supplier: { type: String, required: true },
-  date: { type: Date, required: true },
-  amount: { type: Number, required: true },
-  attachment: { type: String, required: false }, // File path
+const expenseSchema = new mongoose.Schema({
+  description: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 500
+  },
+  amount: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  category: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+    required: true // Ensure date is captured
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-const Expense = mongoose.model("Expense", ExpenseSchema);
+expenseSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
-module.exports = Expense;
+module.exports = mongoose.model('Expense', expenseSchema);

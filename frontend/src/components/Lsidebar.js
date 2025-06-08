@@ -59,6 +59,7 @@ const Lsidebar = () => {
             <>
               <SidebarItem to="/dashboard/stats" icon={<FaChartBar />} label="Overview" />
               <SidebarItem to="/dashboard/product" icon={<FaBoxes />} label="Inventory" />
+              <SidebarItem to="/dashboard/expenses" icon={<FaMoneyBillWave />} label="Expenses" />
               <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
               <SidebarItem to="/dashboard/settings" icon={<FaCog />} label="Settings" />
@@ -68,6 +69,7 @@ const Lsidebar = () => {
           {/* Admin Navigation */}
           {userRole === "admin" && (
             <>
+              <SidebarItem to="/dashboard/overview" icon={<FaChartLine />} label="Overview" />
               <SidebarItem to="/dashboard/listuser" icon={<FaUserCog />} label="Manage Users" />
               <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
             </>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaSearch, FaTrash, FaPen, FaChevronRight, FaPlus, FaChevronLeft, FaDownload } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaPen, FaChevronRight, FaPlus, FaChevronLeft, FaDownload, FaEye } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(5);
@@ -21,6 +22,7 @@ const UserManagement = () => {
     email: "",
     role: "employee"
   });
+  const [viewedUser, setViewedUser] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -84,7 +86,7 @@ const UserManagement = () => {
         });
       }
 
-      setIsOpen(false);
+      setIsFormModalOpen(false);
       setEditMode(false);
       setFormData({
         firstName: "",
@@ -92,9 +94,9 @@ const UserManagement = () => {
         dateOfBirth: "",
         nationality: "",
         username: "",
-        password: "",
         phone: "",
         email: "",
+        password: "",
         role: "employee"
       });
       fetchUsers();
@@ -114,7 +116,7 @@ const UserManagement = () => {
         headers: getHeaders()
       });
       const user = response.data;
-      
+
       setEditMode(true);
       setSelectedId(user._id);
       setFormData({
@@ -122,10 +124,27 @@ const UserManagement = () => {
         password: "",
         dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : ""
       });
-      setIsOpen(true);
+      setIsFormModalOpen(true);
     } catch (error) {
       if (error.response?.status === 401) {
         alert("Unauthorized to access user details");
+        return;
+      }
+      console.error("Error fetching user details", error);
+      alert(error.response?.data?.message || "Error fetching user details");
+    }
+  };
+
+  const handleViewUser = async (userId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/auth/users/${userId}`, {
+        headers: getHeaders()
+      });
+      setViewedUser(response.data);
+      setIsViewModalOpen(true);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        alert("Unauthorized to view user details");
         return;
       }
       console.error("Error fetching user details", error);
@@ -138,14 +157,13 @@ const UserManagement = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Pagination logic
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
@@ -163,10 +181,9 @@ const UserManagement = () => {
     }
   };
 
-  // PDF Download Function
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.text("User Management Report", 10, 10);
+    doc.text("User Registration Report", 10, 10);
     doc.autoTable({
       head: [['Name', 'Username', 'Email', 'Phone', 'Role']],
       body: filteredUsers.map(user => [
@@ -183,9 +200,8 @@ const UserManagement = () => {
 
   return (
     <div className="p-6">
-      {/* Header Section */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+        <h1 className="text-2xl font-bold text-gray-800">User Registration</h1>
         <div className="flex items-center gap-4">
           <div className="relative w-64">
             <input
@@ -199,7 +215,7 @@ const UserManagement = () => {
           </div>
           <button
             onClick={() => {
-              setIsOpen(true);
+              setIsFormModalOpen(true);
               setEditMode(false);
               setFormData({
                 firstName: "",
@@ -228,7 +244,6 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Users Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full">
           <thead className="bg-orange-50">
@@ -259,20 +274,23 @@ const UserManagement = () => {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex justify-end items-center gap-3">
-                    <button 
+                    <button
+                      onClick={() => handleViewUser(user._id)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <FaEye className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => handleDelete(user._id)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <FaTrash className="w-4 h-4" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleEdit(user._id)}
                       className="text-orange-400 hover:text-orange-600"
                     >
                       <FaPen className="w-4 h-4" />
-                    </button>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <FaChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                 </td>
@@ -281,7 +299,6 @@ const UserManagement = () => {
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
         <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
           <div className="text-sm text-gray-500">
             Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} users
@@ -313,14 +330,12 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Modal for User Form */}
-      {isOpen && (
+      {isFormModalOpen && (
         <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl w-[500px] p-6">
             <h3 className="text-lg font-semibold mb-4">{editMode ? "Edit User" : "Add User"}</h3>
-            
+
             <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-              {/* Two-column Grid Layout */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
@@ -422,11 +437,10 @@ const UserManagement = () => {
                 </div>
               </div>
 
-              {/* Buttons Below */}
               <div className="flex justify-end gap-4 mt-6">
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => setIsFormModalOpen(false)}
                   className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
                 >
                   Cancel
@@ -439,6 +453,33 @@ const UserManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isViewModalOpen && viewedUser && (
+        <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-[400px] p-6">
+            <h3 className="text-lg font-semibold mb-4">User Details</h3>
+            <div className="space-y-2">
+              <p><strong>Name:</strong> {viewedUser.firstName} {viewedUser.lastName}</p>
+              <p><strong>Username:</strong> {viewedUser.username}</p>
+              <p><strong>Email:</strong> {viewedUser.email}</p>
+              <p><strong>Phone:</strong> {viewedUser.phone}</p>
+              <p><strong>Role:</strong> {viewedUser.role}</p>
+              <p><strong>Password (Hashed):</strong> {viewedUser.password}</p>
+              {viewedUser.dateOfBirth && <p><strong>Date of Birth:</strong> {new Date(viewedUser.dateOfBirth).toLocaleDateString()}</p>}
+              {viewedUser.nationality && <p><strong>Nationality:</strong> {viewedUser.nationality}</p>}
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => setIsViewModalOpen(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

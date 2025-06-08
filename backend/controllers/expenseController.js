@@ -1,73 +1,64 @@
-// controllers/expenseController.js
-const Expense = require("../models/Expense");
+const Expense = require('../models/Expense');
 
-// Create a new expense with file upload
+// Create a new expense
 exports.createExpense = async (req, res) => {
   try {
-    const { supplier, date, amount } = req.body;
-    const attachment = req.file ? req.file.path : null;
-
-    const newExpense = new Expense({ supplier, date, amount, attachment });
-    await newExpense.save();
-
-    res.status(201).json(newExpense);
+    const expense = new Expense(req.body);
+    await expense.save();
+    res.status(201).json({ success: true, data: expense });
   } catch (error) {
-    res.status(500).json({ message: "Error creating expense", error: error.message });
+    res.status(400).json({ success: false, error: error.message });
   }
 };
 
 // Get all expenses
 exports.getAllExpenses = async (req, res) => {
   try {
-    const expenses = await Expense.find().sort({ date: -1 });
-    res.json(expenses);
+    const expenses = await Expense.find().sort({ date: -1 }); // Sort by newest date
+    res.status(200).json({ success: true, expenses: expenses }); // Use 'expenses' key
   } catch (error) {
-    res.status(500).json({ message: "Error fetching expenses", error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// Get a single expense by ID
-exports.getExpenseById = async (req, res) => {
+// Get single expense
+exports.getExpense = async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id);
     if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
+      return res.status(404).json({ success: false, error: 'Expense not found' });
     }
-    res.json(expense);
+    res.status(200).json({ success: true, data: expense });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching expense", error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// Update an expense
+// Update expense
 exports.updateExpense = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { supplier, date, amount } = req.body;
-      let attachment = req.file ? req.file.path : null; // If a new attachment is uploaded
-  
-      const updatedExpense = await Expense.findByIdAndUpdate(
-        id,
-        { supplier, date, amount, attachment },
-        { new: true }
-      );
-  
-      res.status(200).json(updatedExpense);
-    } catch (error) {
-      console.error('Error updating expense:', error);
-      res.status(500).send('Server error');
+  try {
+    const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!expense) {
+      return res.status(404).json({ success: false, error: 'Expense not found' });
     }
-  };
+    res.status(200).json({ success: true, data: expense });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
-// Delete an expense
+// Delete expense
 exports.deleteExpense = async (req, res) => {
   try {
     const expense = await Expense.findByIdAndDelete(req.params.id);
     if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
+      return res.status(404).json({ success: false, error: 'Expense not found' });
     }
-    res.json({ message: "Expense deleted successfully" });
+    res.status(200).json({ success: true, data: {} });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting expense", error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
