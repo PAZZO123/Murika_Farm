@@ -7,5 +7,6 @@ const requireAuth = passport.authenticate('jwt', { session: false });
 
 router.get('/messages/:receiverId', passport.authenticate('jwt', { session: false }), messageController.getMessages);
 router.post('/messages',  passport.authenticate('jwt', { session: false }), messageController.sendMessage);
+router.get('/conversations', requireAuth, messageController.getConversationsOverview);
 
 module.exports = router;
