@@ -34,7 +34,7 @@ exports.insertAdminUser = async () => {
 exports.signUp = async (req, res) => {
   try {
     const { password, role, email } = req.body;
-    const allowedRoles = ['employee', 'finance', 'manager', 'marketing'];
+    const allowedRoles = ['inventory manager', 'finance', 'manager', 'marketing'];
 
     if (role && allowedRoles.includes(role.toLowerCase())) {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -207,13 +207,13 @@ exports.clientSignUp = async (req, res) => {
       password: hashedPassword,
       dateOfBirth,
       nationality,
-      role: 'client', // Ensure clients are always created with role "client"
+      role: 'supplier', // Ensure clients are always created with role "client"
     });
 
     // Save to the database
     await newUser.save();
 
-    res.status(201).json({ message: 'Client signed up successfully' });
+    res.status(201).json({ message: 'Supplier signed up successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

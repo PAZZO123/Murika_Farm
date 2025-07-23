@@ -22,13 +22,13 @@ const Login = () => {
 
       // Role-based navigation
       switch (currentUser.role) {
-        case 'client':
+        case 'supplier':
           navigate("/dashboard/clientoverview");
           break;
         case 'admin':
           navigate("/dashboard/listuser");
           break;
-        case 'employee':
+        case 'inventory manager':
           navigate("/dashboard/stats");
           break;
           case 'manager':

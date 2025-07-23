@@ -105,26 +105,22 @@ const ClientInformationForm = () => {
       alert("User not authenticated!");
       return;
     }
-
+  
     const data = new FormData();
-    data.append("userId", currentUser._id.toString());
-
+    
+    // Only append userId once
     Object.keys(formData).forEach((key) => {
       if (key === "image" && formData[key] instanceof File) {
         data.append("image", formData[key]);
-      } else if (key !== "image") {
-        const value =
-          key === "userId"
-            ? currentUser._id.toString()
-            : formData[key] === true
-            ? "true"
-            : formData[key] === false
-            ? "false"
-            : formData[key];
+      } else if (key !== "image" && key !== "userId") { // Skip userId here
+        const value = formData[key] === true ? "true" : formData[key] === false ? "false" : formData[key];
         data.append(key, value);
       }
     });
-
+  
+    // Add userId separately
+    data.append("userId", currentUser._id.toString());
+  
     try {
       const config = {
         headers: {
@@ -132,7 +128,7 @@ const ClientInformationForm = () => {
           "Content-Type": "multipart/form-data",
         },
       };
-
+  
       if (editMode) {
         await axios.put(
           `http://localhost:5000/api/clientproducts/${editProductId}`,
@@ -142,7 +138,7 @@ const ClientInformationForm = () => {
       } else {
         await axios.post("http://localhost:5000/api/clientproducts", data, config);
       }
-
+  
       // Reset form data
       setFormData({
         userId: currentUser._id,
@@ -161,7 +157,7 @@ const ClientInformationForm = () => {
       });
       setEditMode(false);
       setEditProductId(null);
-      fetchProducts(currentUser._id); // Refresh product list
+      fetchProducts(currentUser._id);
     } catch (error) {
       console.error("Error submitting form:", error);
       alert(`Error: ${error.response?.data?.message || error.message}`);

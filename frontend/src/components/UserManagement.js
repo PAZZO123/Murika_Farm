@@ -20,7 +20,7 @@ const UserManagement = () => {
         username: "",
         phone: "",
         email: "",
-        role: "employee"
+        role: "inventory manager"
     });
     const [viewedUser, setViewedUser] = useState(null);
     const [selectedId, setSelectedId] = useState(null);
@@ -101,7 +101,7 @@ const UserManagement = () => {
                 phone: "",
                 email: "",
                 password: "",
-                role: "employee"
+                role: "inventory manager"
             });
             fetchUsers();
         } catch (error) {
@@ -132,7 +132,7 @@ const UserManagement = () => {
                 phone: user.phone || "",
                 email: user.email || "",
                 password: "",
-                role: user.role || "employee"
+                role: user.role || "inventory manager"
             });
             setIsFormModalOpen(true);
         } catch (error) {
@@ -237,7 +237,7 @@ const UserManagement = () => {
                                 phone: "",
                                 email: "",
                                 password: "",
-                                role: "employee"
+                                role: "inventory manager"
                             });
                         }}
                         className="flex items-center gap-2 px-4 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500"
@@ -465,7 +465,7 @@ const UserManagement = () => {
                                         onChange={handleInputChange}
                                         className="w-full p-2 mt-1 border border-gray-300 rounded-lg"
                                     >
-                                        <option value="employee">Employee</option>
+                                        <option value="inventory manager">inventory manager</option>
                                         <option value="finance">Finance Manager</option>
                                         <option value="marketing">Marketing Manager</option>
                                         <option value="manager">Manager</option>
@@ -483,7 +483,7 @@ const UserManagement = () => {
                                         setSelectedId(null);
                                         setFormData({
                                             firstName: "", lastName: "", dateOfBirth: "", nationality: "",
-                                            username: "", phone: "", email: "", password: "", role: "employee"
+                                            username: "", phone: "", email: "", password: "", role: "inventory manager"
                                         });
                                     }}
                                     className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"

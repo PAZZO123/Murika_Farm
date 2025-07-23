@@ -45,7 +45,7 @@ const Lsidebar = () => {
         <ul className="space-y-2">
 
           {/* Client Navigation */}
-          {userRole === "client" && (
+          {userRole === "supplier" && (
             <>
               <SidebarItem to="/dashboard/clientoverview" icon={<FaChartLine />} label="Client Overview" />
               <SidebarItem to="/dashboard/usercampaign" icon={<FaBullhorn />} label="Campaigns" />
@@ -55,14 +55,14 @@ const Lsidebar = () => {
           )}
 
           {/* Employee Navigation */}
-          {userRole === "employee" && (
+          {userRole === "inventory manager" && (
             <>
               <SidebarItem to="/dashboard/stats" icon={<FaChartBar />} label="Overview" />
               <SidebarItem to="/dashboard/product" icon={<FaBoxes />} label="Inventory" />
               <SidebarItem to="/dashboard/expenses" icon={<FaMoneyBillWave />} label="Expenses" />
               <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
-              <SidebarItem to="/dashboard/settings" icon={<FaCog />} label="Settings" />
+              
             </>
           )}
 
@@ -101,7 +101,7 @@ const Lsidebar = () => {
               <SidebarItem to="/dashboard/marketing" icon={<FaChartLine />} label="Marketing Overview" />
               <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
-              <SidebarItem to="/dashboard/ads" icon={<FaAd />} label="Ad Management" />
+              
             </>
           )}
 
