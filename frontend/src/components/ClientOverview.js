@@ -215,7 +215,7 @@ const ClientOverview = () => {
         />
         <StatCard 
           title="Average Price" 
-          value={`$${statistics.avgPrice}`} 
+          value={`RWF${statistics.avgPrice}`} 
           icon={DollarSign}
           colorClass="border-yellow-500"
         />
@@ -273,7 +273,7 @@ const ClientOverview = () => {
                     <td className="px-4 py-2">{product.productType}</td>
                     <td className="px-4 py-2">{product.location}</td>
                     <td className="px-4 py-2">{new Date(product.harvestTime).toLocaleDateString()}</td>
-                    <td className="px-4 py-2 text-right">${product.priceSoldAt}</td>
+                    <td className="px-4 py-2 text-right">RWF- {product.priceSoldAt}</td>
                   </tr>
                 ))}
               </tbody>

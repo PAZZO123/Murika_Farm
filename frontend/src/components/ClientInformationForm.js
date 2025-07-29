@@ -483,7 +483,7 @@ const ClientInformationForm = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex space-x-3 mt-4 justify-end">
+                  {/* <div className="flex space-x-3 mt-4 justify-end">
                     <button
                       onClick={() => handleEdit(product)}
                       className="p-2 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors duration-200"
@@ -498,7 +498,7 @@ const ClientInformationForm = () => {
                     >
                       <FaTrash className="w-5 h-5" />
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               ))}
             </div>

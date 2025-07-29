@@ -31,7 +31,7 @@ const Project = () => {
         });
   
         // Filter users based on allowed roles
-        const allowedRoles = ["employee", "finance", "marketing"];
+        const allowedRoles = ["inventory manager", "finance", "marketing", "manager"];
         const filteredUsers = response.data.filter(user => allowedRoles.includes(user.role));
   
         setUsers(filteredUsers);

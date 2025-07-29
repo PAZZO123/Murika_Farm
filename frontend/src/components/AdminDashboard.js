@@ -204,7 +204,7 @@ const AdminDashboard = () => {
         <DashboardCard title="Total Users" value={dashboardData.totalUsers} icon={<FaUsers />} color="bg-gradient-to-r from-blue-500 to-blue-600" />
         <DashboardCard title="Total Campaigns" value={dashboardData.totalCampaigns} icon={<FaChartLine />} color="bg-gradient-to-r from-green-500 to-green-600" />
         <DashboardCard title="Your Products" value={dashboardData.totalCompanyProducts} icon={<FaBuilding />} color="bg-gradient-to-r from-orange-500 to-orange-600" />
-        <DashboardCard title="Client Products" value={dashboardData.totalClientProducts} icon={<FaHandshake />} color="bg-gradient-to-r from-purple-500 to-purple-600" />
+        <DashboardCard title="Supplier Products" value={dashboardData.totalClientProducts} icon={<FaHandshake />} color="bg-gradient-to-r from-purple-500 to-purple-600" />
         <DashboardCard title="Total Projects" value={dashboardData.totalProjects} icon={<FaProjectDiagram />} color="bg-gradient-to-r from-yellow-500 to-yellow-600" />
         <DashboardCard title="Total Expenses" value={dashboardData.totalExpenses} icon={<FaMoneyBillWave />} color="bg-gradient-to-r from-red-500 to-red-600" /> {/* New Card */}
       </div>
@@ -222,11 +222,11 @@ const AdminDashboard = () => {
           <ChartComponent type="pie" data={dashboardData.companyProductCategories} />
         </ChartCard>
 
-        <ChartCard title="Client Product Status" icon={<FaBars />}>
+        <ChartCard title="Supplier Product Status" icon={<FaBars />}>
           <ChartComponent type="bar" data={dashboardData.clientProductStatuses} />
         </ChartCard>
 
-        <ChartCard title="Client Payment Status" icon={<FaChartPie />}>
+        <ChartCard title="Supplier Payment Status" icon={<FaChartPie />}>
           <ChartComponent type="pie" data={dashboardData.clientPaymentStatuses} />
         </ChartCard>
 
