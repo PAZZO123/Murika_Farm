@@ -59,7 +59,7 @@ const DashboardCard = ({ title, value, icon, color }) => (
   <div className={`${color} text-white p-6 rounded-lg shadow-md flex items-center justify-between transition-transform transform hover:scale-105`}>
     <div>
       <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="text-4xl font-bold mt-2">{value.toLocaleString()}</p> {/* Added toLocaleString() for number formatting */}
+      <p className="text-2xl font-bold mt-2">{value.toLocaleString()}</p> {/* Added toLocaleString() for number formatting */}
     </div>
     <div className="text-5xl opacity-75">{icon}</div>
   </div>
@@ -200,13 +200,13 @@ const AdminDashboard = () => {
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Admin Dashboard Overview</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8"> {/* Changed to xl:grid-cols-6 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-8"> {/* Changed to xl:grid-cols-6 */}
         <DashboardCard title="Total Users" value={dashboardData.totalUsers} icon={<FaUsers />} color="bg-gradient-to-r from-blue-500 to-blue-600" />
         <DashboardCard title="Total Campaigns" value={dashboardData.totalCampaigns} icon={<FaChartLine />} color="bg-gradient-to-r from-green-500 to-green-600" />
         <DashboardCard title="Your Products" value={dashboardData.totalCompanyProducts} icon={<FaBuilding />} color="bg-gradient-to-r from-orange-500 to-orange-600" />
         <DashboardCard title="Supplier Products" value={dashboardData.totalClientProducts} icon={<FaHandshake />} color="bg-gradient-to-r from-purple-500 to-purple-600" />
         <DashboardCard title="Total Projects" value={dashboardData.totalProjects} icon={<FaProjectDiagram />} color="bg-gradient-to-r from-yellow-500 to-yellow-600" />
-        <DashboardCard title="Total Expenses" value={dashboardData.totalExpenses} icon={<FaMoneyBillWave />} color="bg-gradient-to-r from-red-500 to-red-600" /> {/* New Card */}
+        <DashboardCard title="Total Expenses" value={`${dashboardData.totalExpenses} Rwf`}   icon={<FaMoneyBillWave />} Rwf color="bg-gradient-to-r from-red-500 to-red-600" /> {/* New Card */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -218,9 +218,9 @@ const AdminDashboard = () => {
           <ChartComponent type="bar" data={dashboardData.campaignStatus} />
         </ChartCard>
 
-        <ChartCard title="Your Product Categories" icon={<FaChartPie />}>
+        {/* <ChartCard title="Your Product Categories" icon={<FaChartPie />}>
           <ChartComponent type="pie" data={dashboardData.companyProductCategories} />
-        </ChartCard>
+        </ChartCard> */}
 
         <ChartCard title="Supplier Product Status" icon={<FaBars />}>
           <ChartComponent type="bar" data={dashboardData.clientProductStatuses} />

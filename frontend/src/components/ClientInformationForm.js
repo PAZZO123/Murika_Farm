@@ -471,7 +471,7 @@ const ClientInformationForm = () => {
                       <FaMapMarker className="inline mr-1" /> {product.location}
                     </p>
                     <p className="text-sm text-gray-600 mb-2">
-                      <FaMoneyBill className="inline mr-1" /> Price: ${product.priceSoldAt}
+                      <FaMoneyBill className="inline mr-1" /> Price: rwf{product.priceSoldAt}
                     </p>
                     {product.image && (
                       <div className="mt-3">

@@ -232,7 +232,7 @@ const ProductList = () => {
                       {product.productType}
                     </h3>
                     <p className="text-lg font-semibold text-green-600 mb-4 flex items-center">
-                      <FaMoneyBillWave className="mr-2 text-xl" /> $
+                      <FaMoneyBillWave className="mr-2 text-xl" /> rwf
                       {product.priceSoldAt}
                     </p>
 

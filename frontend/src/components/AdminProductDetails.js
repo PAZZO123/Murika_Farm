@@ -114,7 +114,7 @@ const AdminProductDetails = () => {
                 <div className="flex items-center mb-2">
                   <FaMoneyBill className="text-gray-400 mr-2" />
                   <p className="text-gray-700">
-                    <span className="font-semibold">Price Sold At:</span> ${product.priceSoldAt}
+                    <span className="font-semibold">Price Sold At:</span> rwf {product.priceSoldAt}
                   </p>
                 </div>
                 <div className="flex items-center mb-2">

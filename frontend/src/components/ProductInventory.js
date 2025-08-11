@@ -52,7 +52,7 @@ const ProductForm = React.memo(({ onSubmit, title, submitText, formData, handleI
         />
       </div>
       <div>
-        <label htmlFor="vendor" className="block text-sm font-medium text-gray-700">Vendor <span className="text-red-500">*</span></label>
+        <label htmlFor="vendor" className="block text-sm font-medium text-gray-700">Supplier <span className="text-red-500">*</span></label>
         <input
           id="vendor"
           type="text"

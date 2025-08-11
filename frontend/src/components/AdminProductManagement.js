@@ -681,7 +681,7 @@ const AdminProductManagement = () => {
                     </p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Plant Time:</span> {selectedProduct.plantTime || 'N/A'}</p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Harvest Time:</span> {selectedProduct.harvestTime || 'N/A'}</p>
-                    <p className="text-sm text-gray-600"><span className="font-medium">Price:</span> <span className="text-green-600 font-bold">${Number(selectedProduct.priceSoldAt).toFixed(2)}</span></p>
+                    <p className="text-sm text-gray-600"><span className="font-medium">Price:</span> <span className="text-green-600 font-bold">rwf {Number(selectedProduct.priceSoldAt).toFixed(2)}</span></p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Logistics Needed:</span> {selectedProduct.needLogistic ? 'Yes' : 'No'}</p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Quantity:</span> {selectedProduct.quantity || 'N/A'} {selectedProduct.unit || 'units'}</p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Certification:</span> {selectedProduct.certification || 'None'}</p>
@@ -845,7 +845,7 @@ const AdminProductManagement = () => {
               </div>
               <div>
                 <label htmlFor="minPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                  Min Price ($)
+                  Min Price (rwf)
                 </label>
                 <input
                   type="number"
@@ -860,7 +860,7 @@ const AdminProductManagement = () => {
               </div>
               <div>
                 <label htmlFor="maxPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                  Max Price ($)
+                  Max Price (rwf)
                 </label>
                 <input
                   type="number"
@@ -1143,7 +1143,7 @@ const AdminProductManagement = () => {
                       <div className="flex items-center text-sm text-gray-600">
                         <span className="font-semibold mr-2">Price:</span>
                         <span className="text-green-600 font-extrabold text-lg">
-                          ${Number(product.priceSoldAt).toFixed(2)}
+                          rwf{Number(product.priceSoldAt).toFixed(2)}
                         </span>
                       </div>
                     </div>

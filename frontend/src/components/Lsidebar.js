@@ -47,7 +47,7 @@ const Lsidebar = () => {
           {/* Client Navigation */}
           {userRole === "supplier" && (
             <>
-              <SidebarItem to="/dashboard/clientoverview" icon={<FaChartLine />} label="Client Overview" />
+              <SidebarItem to="/dashboard/clientoverview" icon={<FaChartLine />} label="Supplier Overview" />
               <SidebarItem to="/dashboard/usercampaign" icon={<FaBullhorn />} label="Campaigns" />
               <SidebarItem to="/dashboard/clienttasks" icon={<FaShoppingBag />} label="Add Product" />
               <SidebarItem to="/dashboard/products" icon={<FaBoxes />} label="My products" />

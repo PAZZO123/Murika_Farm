@@ -154,7 +154,7 @@ const ProductDetail = () => {
                 { label: "Location", value: product.location, icon: FaMapMarkerAlt },
                 { label: "Planting Date", value: new Date(product.plantTime).toLocaleDateString(), icon: FaCalendarAlt },
                 { label: "Harvest Date", value: new Date(product.harvestTime).toLocaleDateString(), icon: FaCalendarAlt },
-                { label: "Price", value: `$${product.priceSoldAt}`, icon: FaMoneyBillWave },
+                { label: "Price", value: `rwf${product.priceSoldAt}`, icon: FaMoneyBillWave },
                 { label: "Logistic Needed", value: product.needLogistic ? "Yes" : "No", icon: FaTruck },
               ].map((item, index) => (
                 <div key={index} className="flex items-start">

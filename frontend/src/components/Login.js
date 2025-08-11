@@ -26,7 +26,7 @@ const Login = () => {
           navigate("/dashboard/clientoverview");
           break;
         case 'admin':
-          navigate("/dashboard/listuser");
+          navigate("/dashboard/overview");
           break;
         case 'inventory manager':
           navigate("/dashboard/stats");
