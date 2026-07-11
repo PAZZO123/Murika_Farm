@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../Assets/Logo.png";
+import { getUnreadTotal } from "../socket";
 import { 
   FaChartBar, FaBoxes, FaCog, FaUsers, FaSignOutAlt, 
   FaBriefcase, FaMoneyBillWave, FaBullhorn, FaTasks,
@@ -26,9 +27,9 @@ const Lsidebar = () => {
     fetchUserRole();
 
     // Pick up any unread count already saved (e.g. after page refresh)
-    setChatUnread(Number(localStorage.getItem('chatUnreadTotal') || 0));
+    setChatUnread(getUnreadTotal());
 
-    const handleUnread = (e) => setChatUnread(e.detail || 0);
+    const handleUnread = (e) => setChatUnread(e.detail?.total || 0);
     window.addEventListener('chat-unread-update', handleUnread);
     return () => window.removeEventListener('chat-unread-update', handleUnread);
   }, []);

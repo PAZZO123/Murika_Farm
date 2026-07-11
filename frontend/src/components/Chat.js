@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import { socket, connectSocket, getUnread, clearUnread } from '../socket';
 import {
   Send, Phone, PhoneOff, Paperclip, Hash,
   Mic, MicOff, FileText, Download, PhoneIncoming, Users, StopCircle,
@@ -152,11 +152,9 @@ export default function Chat() {
   const [privateMessages, setPrivateMessages] = useState({});
   const [allUsers,        setAllUsers]        = useState([]);
   const [onlineIds,       setOnlineIds]       = useState([]);
-  const [unread,          setUnread]          = useState({});   // { userId: count }
-  const [groupUnread,     setGroupUnread]     = useState(0);
+  const [unread,          setUnread]          = useState(getUnread); // shared store: { group: n, userId: n }
   const [input,           setInput]           = useState('');
   const inputRef      = useRef('');
-  const activeViewRef = useRef('group');       // always-current mirror for socket callbacks
   const [uploading,    setUploading]          = useState(false);
 
   // Voice note state
@@ -180,17 +178,19 @@ export default function Chat() {
   const chunksRef      = useRef([]);
   const recTimerRef    = useRef(null);
 
-  // Keep activeViewRef in sync
+  // Tell the global listener (DashboardLayout) which conversation is open,
+  // so it doesn't count messages the user is already reading.
   useEffect(() => {
-    activeViewRef.current = activeView;
+    window.__chatActiveView = activeView;
+    return () => { window.__chatActiveView = null; };
   }, [activeView]);
 
-  // Broadcast total unread to Lsidebar via custom event
+  // Stay in sync with the shared unread store (global listener updates it)
   useEffect(() => {
-    const total = groupUnread + Object.values(unread).reduce((s, c) => s + c, 0);
-    localStorage.setItem('chatUnreadTotal', String(total));
-    window.dispatchEvent(new CustomEvent('chat-unread-update', { detail: total }));
-  }, [groupUnread, unread]);
+    const onUnread = (e) => setUnread({ ...e.detail.counts });
+    window.addEventListener('chat-unread-update', onUnread);
+    return () => window.removeEventListener('chat-unread-update', onUnread);
+  }, []);
 
   // ── WebRTC helpers ─────────────────────────────────────────────────────────
   const cleanupCall = useCallback(() => {
@@ -223,57 +223,65 @@ export default function Chat() {
     return pc;
   }, []);
 
-  // ── Socket setup ───────────────────────────────────────────────────────────
+  // ── Socket setup (shared app-wide connection — do NOT disconnect here) ─────
   useEffect(() => {
-    const socket = io(API, { transports: ['websocket'] });
+    connectSocket(currentUser._id);
     socketRef.current = socket;
 
-    socket.on('connect', () => socket.emit('user-online', currentUser._id));
-    socket.on('online-users', (ids) => setOnlineIds(ids.map(String)));
+    const onOnlineUsers = (ids) => setOnlineIds(ids.map(String));
 
-    socket.on('new-group-message', (msg) => {
+    const onGroupMessage = (msg) => {
       setGroupMessages(prev => {
         if (prev.some(m => m._id === msg._id)) return prev;
         return [...prev, msg];
       });
-      if (activeViewRef.current !== 'group') {
-        setGroupUnread(c => c + 1);
-      }
-    });
+    };
 
-    socket.on('new-private-message', (msg) => {
+    const onPrivateMessage = (msg) => {
       const senderId = String(msg.sender?._id || msg.sender);
       setPrivateMessages(prev => ({
         ...prev,
         [senderId]: [...(prev[senderId] || []), msg],
       }));
-      setActiveView(cur => {
-        if (cur !== senderId) {
-          setUnread(u => ({ ...u, [senderId]: (u[senderId] || 0) + 1 }));
-        }
-        return cur;
-      });
-    });
+    };
 
-    socket.on('incoming-call', ({ callerId, callerName, offer }) => {
+    const onIncomingCall = ({ callerId, callerName, offer }) => {
       setIncomingCall({ callerId, callerName, offer });
       setCallState('receiving');
-    });
+    };
 
-    socket.on('call-answered', async ({ answer }) => {
+    const onCallAnswered = async ({ answer }) => {
       try {
         await pcRef.current?.setRemoteDescription(new RTCSessionDescription(answer));
         setCallState('in-call');
       } catch (_) {}
-    });
+    };
 
-    socket.on('ice-candidate', async ({ candidate }) => {
+    const onIceCandidate = async ({ candidate }) => {
       try { await pcRef.current?.addIceCandidate(new RTCIceCandidate(candidate)); } catch (_) {}
-    });
+    };
 
-    socket.on('call-ended', () => cleanupCall());
+    const onCallEnded = () => cleanupCall();
 
-    return () => socket.disconnect();
+    socket.on('online-users',        onOnlineUsers);
+    socket.on('new-group-message',   onGroupMessage);
+    socket.on('new-private-message', onPrivateMessage);
+    socket.on('incoming-call',       onIncomingCall);
+    socket.on('call-answered',       onCallAnswered);
+    socket.on('ice-candidate',       onIceCandidate);
+    socket.on('call-ended',          onCallEnded);
+
+    // Unread counting happens in DashboardLayout's global listener —
+    // remove only OUR listeners here, keep the shared socket alive.
+    return () => {
+      socket.off('online-users',        onOnlineUsers);
+      socket.off('new-group-message',   onGroupMessage);
+      socket.off('new-private-message', onPrivateMessage);
+      socket.off('incoming-call',       onIncomingCall);
+      socket.off('call-answered',       onCallAnswered);
+      socket.off('ice-candidate',       onIceCandidate);
+      socket.off('call-ended',          onCallEnded);
+    };
   }, [currentUser._id, cleanupCall]);
 
   // ── Fetch all users ────────────────────────────────────────────────────────
@@ -479,13 +487,13 @@ export default function Chat() {
   const selectUser = (user) => {
     setSelectedUser(user);
     setActiveView(String(user._id));
-    setUnread(u => ({ ...u, [String(user._id)]: 0 }));
+    clearUnread(String(user._id));
   };
 
   const selectGroup = () => {
     setActiveView('group');
     setSelectedUser(null);
-    setGroupUnread(0);
+    clearUnread('group');
   };
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -540,11 +548,11 @@ export default function Chat() {
           >
             <Hash className="w-4 h-4 shrink-0" />
             <span className="font-medium">general</span>
-            {groupUnread > 0 && activeView !== 'group' ? (
+            {(unread.group || 0) > 0 && activeView !== 'group' ? (
               <span className="ml-auto bg-green-400 text-[#0b2e1a] text-[10px] font-bold
                                rounded-full min-w-[18px] h-[18px] flex items-center
                                justify-center px-1 shrink-0">
-                {groupUnread > 99 ? '99+' : groupUnread}
+                {unread.group > 99 ? '99+' : unread.group}
               </span>
             ) : (
               <span className="ml-auto text-[10px] text-green-300">{allUsers.length + 1}</span>

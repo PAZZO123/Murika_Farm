@@ -81,17 +81,37 @@ exports.signUp = async (req, res) => {
   }
 };
 
+// Simple in-memory brute-force protection: 5 failed attempts → 15 min lockout
+const loginAttempts = new Map(); // key → { count, lockedUntil }
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS   = 15 * 60 * 1000;
+
 // User SignIn
 exports.signIn = async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
+
+    const attemptKey = `${req.ip}:${String(usernameOrEmail).toLowerCase()}`;
+    const attempt = loginAttempts.get(attemptKey);
+    if (attempt?.lockedUntil && attempt.lockedUntil > Date.now()) {
+      const minutesLeft = Math.ceil((attempt.lockedUntil - Date.now()) / 60000);
+      return res.status(429).json({ error: `Too many failed attempts. Try again in ${minutesLeft} minute(s).` });
+    }
+
     const user = await User.findOne({
       $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
     });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error('Invalid credentials');
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) throw new Error('Invalid password');
+    if (!isPasswordValid) {
+      const next = { count: (attempt?.count || 0) + 1, lockedUntil: null };
+      if (next.count >= MAX_ATTEMPTS) next.lockedUntil = Date.now() + LOCKOUT_MS;
+      loginAttempts.set(attemptKey, next);
+      throw new Error('Invalid credentials');
+    }
+
+    loginAttempts.delete(attemptKey);
 
     const token = jwt.sign({ userId: user._id }, config.secret, { expiresIn: '1h' });
 
@@ -103,15 +123,10 @@ exports.signIn = async (req, res) => {
     res.status(401).json({ error: error.message });
   }
 };
-// User Logout
-exports.logOut = (req, res, next) => {
-  try {
-    if (!req.params.id) return res.json({ msg: 'User ID is required' });
-    onlineUsers.delete(req.params.id);
-    return res.status(200).send();
-  } catch (error) {
-    next(error);
-  }
+// User Logout (presence is handled by Socket.IO disconnect)
+exports.logOut = (req, res) => {
+  if (!req.params.id) return res.status(400).json({ msg: 'User ID is required' });
+  return res.status(200).json({ message: 'Logged out' });
 };
 
 // Get All Users
@@ -156,7 +171,8 @@ exports.getOne = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    const updateData = req.body;
+    // Strip privileged fields — otherwise any user could set role: 'admin'
+    const { role, _id, ...updateData } = req.body;
 
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
@@ -187,6 +203,11 @@ exports.deleteUser = async (req, res) => {
 exports.clientSignUp = async (req, res) => {
   try {
     const { firstName, lastName, username, email, phone, password, dateOfBirth, nationality } = req.body;
+
+    // Server-side validation (frontend checks can be bypassed)
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
 
     // Check if the username or email already exists
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });

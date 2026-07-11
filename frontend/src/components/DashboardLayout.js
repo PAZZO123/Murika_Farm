@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { FaChevronDown, FaUser } from "react-icons/fa";
 import Lsidebar from "./Lsidebar";
+import { socket, connectSocket, incrementUnread } from "../socket";
 
 const DashboardLayout = () => {
   const [user, setUser] = useState(null);
@@ -18,6 +19,34 @@ const DashboardLayout = () => {
       navigate("/login");
     }
   }, [navigate]); // Add navigate to dependency array
+
+  // Global chat notifications — counts unread messages on EVERY dashboard
+  // page, not just while the chat screen is open (like WhatsApp).
+  useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (!currentUser._id) return;
+    connectSocket(currentUser._id);
+
+    const onGroupMessage = (msg) => {
+      const senderId = String(msg.sender?._id || msg.sender);
+      if (senderId === String(currentUser._id)) return;      // own message
+      if (window.__chatActiveView === 'group') return;        // already reading it
+      incrementUnread('group');
+    };
+
+    const onPrivateMessage = (msg) => {
+      const senderId = String(msg.sender?._id || msg.sender);
+      if (window.__chatActiveView === senderId) return;       // already reading it
+      incrementUnread(senderId);
+    };
+
+    socket.on('new-group-message', onGroupMessage);
+    socket.on('new-private-message', onPrivateMessage);
+    return () => {
+      socket.off('new-group-message', onGroupMessage);
+      socket.off('new-private-message', onPrivateMessage);
+    };
+  }, []);
 
   const handleLogout = () => {
     console.log("Logging out...");

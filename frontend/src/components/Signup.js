@@ -68,7 +68,7 @@ const Signup = () => {
       newErrors.phone = "Please enter a valid phone number";
     }
 
-    if (formData.password.length < 1) {
+    if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters long";
     }
 
@@ -117,10 +117,10 @@ const Signup = () => {
 
       setStatus({
         type: "success",
-        message: "Account created successfully! You can now log in."
+        message: "Account created successfully! Redirecting to login…"
       });
-      
-      
+
+
       setFormData({
         firstName: "",
         lastName: "",
@@ -132,12 +132,15 @@ const Signup = () => {
         dateOfBirth: "",
         nationality: "",
       });
-      navigate("/login"); 
-      
+      setTimeout(() => navigate("/login"), 1500);
+
     } catch (error) {
+      // Backend sends { error: "..." } — read that key (with fallbacks)
       setStatus({
         type: "error",
-        message: error.response?.data?.message || "Registration failed. Please try again."
+        message: error.response?.data?.error
+              || error.response?.data?.message
+              || "Registration failed. Please try again."
       });
     } finally {
       setLoading(false);
