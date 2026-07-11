@@ -11,6 +11,7 @@ import {
 const Lsidebar = () => {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [chatUnread, setChatUnread] = useState(0);
 
   useEffect(() => {
     const fetchUserRole = () => {
@@ -23,6 +24,13 @@ const Lsidebar = () => {
     };
 
     fetchUserRole();
+
+    // Pick up any unread count already saved (e.g. after page refresh)
+    setChatUnread(Number(localStorage.getItem('chatUnreadTotal') || 0));
+
+    const handleUnread = (e) => setChatUnread(e.detail || 0);
+    window.addEventListener('chat-unread-update', handleUnread);
+    return () => window.removeEventListener('chat-unread-update', handleUnread);
   }, []);
 
   const handleLogout = () => {
@@ -60,9 +68,8 @@ const Lsidebar = () => {
               <SidebarItem to="/dashboard/stats" icon={<FaChartBar />} label="Overview" />
               <SidebarItem to="/dashboard/product" icon={<FaBoxes />} label="Inventory" />
               <SidebarItem to="/dashboard/expenses" icon={<FaMoneyBillWave />} label="Expenses" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" badge={chatUnread} />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
-              
             </>
           )}
 
@@ -71,7 +78,7 @@ const Lsidebar = () => {
             <>
               <SidebarItem to="/dashboard/overview" icon={<FaChartLine />} label="Overview" />
               <SidebarItem to="/dashboard/listuser" icon={<FaUserCog />} label="Manage Users" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" badge={chatUnread} />
             </>
           )}
 
@@ -81,17 +88,16 @@ const Lsidebar = () => {
               <SidebarItem to="/dashboard/tasks" icon={<FaChartLine />} label="Manager Overview" />
               <SidebarItem to="/dashboard/project" icon={<FaProjectDiagram />} label="Manage Projects" />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="My Task" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" badge={chatUnread} />
             </>
           )}
 
           {/* Finance Navigation */}
           {userRole === "finance" && (
             <>
-             
               <SidebarItem to="/dashboard/adminproduct" icon={<FaWarehouse />} label="Finance Overview" />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" badge={chatUnread} />
             </>
           )}
 
@@ -99,9 +105,8 @@ const Lsidebar = () => {
           {userRole === "marketing" && (
             <>
               <SidebarItem to="/dashboard/marketing" icon={<FaChartLine />} label="Marketing Overview" />
-              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" />
+              <SidebarItem to="/dashboard/chat" icon={<FaCommentAlt />} label="Chat" badge={chatUnread} />
               <SidebarItem to="/dashboard/task" icon={<FaClipboardList />} label="Task" />
-              
             </>
           )}
 
@@ -118,14 +123,21 @@ const Lsidebar = () => {
   );
 };
 
-const SidebarItem = ({ to, icon, label }) => (
+const SidebarItem = ({ to, icon, label, badge = 0 }) => (
   <li>
     <NavLink
       to={to}
       className="flex items-center space-x-3 text-gray-700 p-2 rounded-md hover:bg-gray-100"
       activeClassName="font-semibold text-green-600"
     >
-      {icon} <span>{label}</span>
+      {icon}
+      <span className="flex-1">{label}</span>
+      {badge > 0 && (
+        <span className="bg-green-600 text-white text-[10px] font-bold rounded-full
+                         min-w-[18px] h-[18px] flex items-center justify-center px-1">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </NavLink>
   </li>
 );

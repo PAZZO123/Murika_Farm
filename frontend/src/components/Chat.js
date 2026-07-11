@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import {
   Send, Phone, PhoneOff, Paperclip, Hash,
-  Mic, MicOff, FileText, Download, PhoneIncoming, Users,
+  Mic, MicOff, FileText, Download, PhoneIncoming, Users, StopCircle,
 } from 'lucide-react';
 
 const API = 'http://localhost:5000';
@@ -11,7 +11,6 @@ const getHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// ── Small helpers ─────────────────────────────────────────────────────────
 function initials(u) {
   return `${u?.firstName?.[0] || ''}${u?.lastName?.[0] || ''}`.toUpperCase() || '?';
 }
@@ -19,10 +18,8 @@ function initials(u) {
 function Avatar({ user, size = 9, online = false }) {
   return (
     <div className="relative shrink-0" style={{ width: size * 4, height: size * 4 }}>
-      <div
-        className="w-full h-full rounded-full bg-green-700 flex items-center justify-center
-                   text-white font-bold text-sm select-none"
-      >
+      <div className="w-full h-full rounded-full bg-green-700 flex items-center justify-center
+                      text-white font-bold text-sm select-none">
         {initials(user)}
       </div>
       {online && (
@@ -33,7 +30,7 @@ function Avatar({ user, size = 9, online = false }) {
   );
 }
 
-// ── Message bubble ────────────────────────────────────────────────────────
+// ── Message bubble ────────────────────────────────────────────────────────────
 function Bubble({ msg, isOwn }) {
   const ts = new Date(msg.timestamp || msg.createdAt)
     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -66,6 +63,22 @@ function Bubble({ msg, isOwn }) {
         </div>
       );
     }
+    if (msg.mediaType === 'audio' && msg.mediaUrl) {
+      return (
+        <div className="min-w-[220px] flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <Mic className="w-4 h-4 shrink-0 opacity-70" />
+            <audio
+              src={`${API}${msg.mediaUrl}`}
+              controls
+              className="w-full"
+              style={{ height: 32, minWidth: 160 }}
+            />
+          </div>
+          {msg.content && <p className="mt-1 text-sm">{msg.content}</p>}
+        </div>
+      );
+    }
     if (msg.mediaType === 'document' && msg.mediaUrl) {
       return (
         <a
@@ -81,18 +94,14 @@ function Bubble({ msg, isOwn }) {
         </a>
       );
     }
-    return (
-      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-    );
+    return <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>;
   };
 
   return (
     <div className={`flex items-end gap-2 mb-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
       {!isOwn && (
-        <div
-          className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center
-                     text-white text-xs font-bold shrink-0"
-        >
+        <div className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center
+                        text-white text-xs font-bold shrink-0">
           {initials(msg.sender)}
         </div>
       )}
@@ -117,37 +126,58 @@ function Bubble({ msg, isOwn }) {
   );
 }
 
-// ── Main Chat ─────────────────────────────────────────────────────────────
+// ── Main Chat ─────────────────────────────────────────────────────────────────
 export default function Chat() {
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
 
-  // ── State ─────────────────────────────────────────────────────────────
+  // ── State ──────────────────────────────────────────────────────────────────
   const [activeView,      setActiveView]      = useState('group');
   const [selectedUser,    setSelectedUser]    = useState(null);
   const [groupMessages,   setGroupMessages]   = useState([]);
-  const [privateMessages, setPrivateMessages] = useState({});   // { userId: [msg, …] }
+  const [privateMessages, setPrivateMessages] = useState({});
   const [allUsers,        setAllUsers]        = useState([]);
   const [onlineIds,       setOnlineIds]       = useState([]);
   const [unread,          setUnread]          = useState({});   // { userId: count }
+  const [groupUnread,     setGroupUnread]     = useState(0);
   const [input,           setInput]           = useState('');
-  const inputRef = useRef('');          // always-current mirror of input state
-  const [uploading,       setUploading]       = useState(false);
+  const inputRef      = useRef('');
+  const activeViewRef = useRef('group');       // always-current mirror for socket callbacks
+  const [uploading,    setUploading]          = useState(false);
 
-  // Voice-call state
-  const [callState,    setCallState]    = useState('idle'); // idle|calling|in-call|receiving
-  const [incomingCall, setIncomingCall] = useState(null);   // { callerId, callerName, offer }
-  const [callPeer,     setCallPeer]     = useState(null);   // user object
+  // Voice note state
+  const [isRecording,   setIsRecording]   = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+
+  // Voice call state
+  const [callState,    setCallState]    = useState('idle');
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [callPeer,     setCallPeer]     = useState(null);
   const [isMuted,      setIsMuted]      = useState(false);
 
-  // ── Refs ─────────────────────────────────────────────────────────────
+  // ── Refs ───────────────────────────────────────────────────────────────────
   const socketRef      = useRef(null);
   const bottomRef      = useRef(null);
   const fileInputRef   = useRef(null);
   const pcRef          = useRef(null);
   const localStreamRef = useRef(null);
   const remoteAudioRef = useRef(null);
+  const recorderRef    = useRef(null);
+  const chunksRef      = useRef([]);
+  const recTimerRef    = useRef(null);
 
-  // ── WebRTC helpers ────────────────────────────────────────────────────
+  // Keep activeViewRef in sync
+  useEffect(() => {
+    activeViewRef.current = activeView;
+  }, [activeView]);
+
+  // Broadcast total unread to Lsidebar via custom event
+  useEffect(() => {
+    const total = groupUnread + Object.values(unread).reduce((s, c) => s + c, 0);
+    localStorage.setItem('chatUnreadTotal', String(total));
+    window.dispatchEvent(new CustomEvent('chat-unread-update', { detail: total }));
+  }, [groupUnread, unread]);
+
+  // ── WebRTC helpers ─────────────────────────────────────────────────────────
   const cleanupCall = useCallback(() => {
     pcRef.current?.close();
     pcRef.current = null;
@@ -178,13 +208,12 @@ export default function Chat() {
     return pc;
   }, []);
 
-  // ── Socket setup ──────────────────────────────────────────────────────
+  // ── Socket setup ───────────────────────────────────────────────────────────
   useEffect(() => {
     const socket = io(API, { transports: ['websocket'] });
     socketRef.current = socket;
 
     socket.on('connect', () => socket.emit('user-online', currentUser._id));
-
     socket.on('online-users', (ids) => setOnlineIds(ids.map(String)));
 
     socket.on('new-group-message', (msg) => {
@@ -192,6 +221,9 @@ export default function Chat() {
         if (prev.some(m => m._id === msg._id)) return prev;
         return [...prev, msg];
       });
+      if (activeViewRef.current !== 'group') {
+        setGroupUnread(c => c + 1);
+      }
     });
 
     socket.on('new-private-message', (msg) => {
@@ -229,7 +261,7 @@ export default function Chat() {
     return () => socket.disconnect();
   }, [currentUser._id, cleanupCall]);
 
-  // ── Fetch all users ───────────────────────────────────────────────────
+  // ── Fetch all users ────────────────────────────────────────────────────────
   useEffect(() => {
     fetch(`${API}/api/auth/users`, { headers: getHeaders() })
       .then(r => r.json())
@@ -237,7 +269,7 @@ export default function Chat() {
       .catch(console.error);
   }, [currentUser._id]);
 
-  // ── Fetch group messages on mount ─────────────────────────────────────
+  // ── Fetch group messages on mount ──────────────────────────────────────────
   useEffect(() => {
     fetch(`${API}/api/group-messages`, { headers: getHeaders() })
       .then(r => r.json())
@@ -245,7 +277,7 @@ export default function Chat() {
       .catch(console.error);
   }, []);
 
-  // ── Fetch DM history when a user is selected ──────────────────────────
+  // ── Fetch DM history when a user is selected ───────────────────────────────
   useEffect(() => {
     if (!selectedUser) return;
     const uid = String(selectedUser._id);
@@ -256,14 +288,14 @@ export default function Chat() {
       .catch(console.error);
   }, [selectedUser]); // eslint-disable-line
 
-  // ── Auto-scroll ───────────────────────────────────────────────────────
+  // ── Auto-scroll ────────────────────────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [groupMessages, privateMessages, activeView]);
 
-  // ── Send text / media ─────────────────────────────────────────────────
+  // ── Send text / media ──────────────────────────────────────────────────────
   const sendMessage = useCallback(async (mediaData = null) => {
-    const content = inputRef.current.trim();   // always read from ref, never stale
+    const content = inputRef.current.trim();
     if (!content && !mediaData) return;
     const body = { content: content || '', ...(mediaData || {}) };
 
@@ -273,7 +305,6 @@ export default function Chat() {
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
         body:    JSON.stringify(body),
       });
-      // socket broadcasts it back — no local push needed
     } else if (selectedUser) {
       const saved = await fetch(`${API}/api/messages`, {
         method:  'POST',
@@ -281,7 +312,6 @@ export default function Chat() {
         body:    JSON.stringify({ receiver: selectedUser._id, ...body }),
       }).then(r => r.json());
 
-      // Optimistic local state (server already notified the receiver)
       const enriched = {
         ...saved,
         sender: {
@@ -300,7 +330,7 @@ export default function Chat() {
     inputRef.current = '';
   }, [activeView, selectedUser, currentUser]);
 
-  // ── File upload ───────────────────────────────────────────────────────
+  // ── File upload ────────────────────────────────────────────────────────────
   const handleFileChange = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -322,7 +352,57 @@ export default function Chat() {
     }
   }, [sendMessage]);
 
-  // ── Voice call actions ────────────────────────────────────────────────
+  // ── Voice note recording ───────────────────────────────────────────────────
+  const startVoiceNote = useCallback(async () => {
+    if (isRecording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+      const recorder = new MediaRecorder(stream, { mimeType });
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const ext  = mimeType.includes('webm') ? 'webm' : 'ogg';
+        const file = new File([blob], `voice-note-${Date.now()}.${ext}`, { type: mimeType });
+        const fd   = new FormData();
+        fd.append('file', file);
+        try {
+          const { url, mediaType, fileName } = await fetch(`${API}/api/chat/upload`, {
+            method:  'POST',
+            headers: getHeaders(),
+            body:    fd,
+          }).then(r => r.json());
+          await sendMessage({ mediaUrl: url, mediaType, fileName });
+        } catch (err) {
+          console.error('Voice note upload error:', err);
+        }
+        setRecordingTime(0);
+        clearInterval(recTimerRef.current);
+      };
+      recorder.start();
+      recorderRef.current = recorder;
+      setIsRecording(true);
+      setRecordingTime(0);
+      recTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } catch (err) {
+      console.error('Mic access error:', err);
+    }
+  }, [isRecording, sendMessage]);
+
+  const stopVoiceNote = useCallback(() => {
+    recorderRef.current?.stop();
+    recorderRef.current = null;
+    setIsRecording(false);
+    clearInterval(recTimerRef.current);
+  }, []);
+
+  // ── Voice call actions ─────────────────────────────────────────────────────
   const startCall = useCallback(async (target) => {
     setCallPeer(target);
     setCallState('calling');
@@ -389,7 +469,13 @@ export default function Chat() {
     setUnread(u => ({ ...u, [String(user._id)]: 0 }));
   };
 
-  // ── Derived values ────────────────────────────────────────────────────
+  const selectGroup = () => {
+    setActiveView('group');
+    setSelectedUser(null);
+    setGroupUnread(0);
+  };
+
+  // ── Derived ────────────────────────────────────────────────────────────────
   const messages = activeView === 'group'
     ? groupMessages
     : (privateMessages[activeView] || []);
@@ -404,7 +490,9 @@ export default function Chat() {
       ? onlineIds.includes(String(selectedUser._id)) ? 'Online' : selectedUser.role
       : '';
 
-  // ── Render ────────────────────────────────────────────────────────────
+  const fmtTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-full -m-4 overflow-hidden bg-gray-100">
 
@@ -425,13 +513,13 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* #general channel */}
+        {/* #general */}
         <div className="px-3 pt-4">
           <p className="text-[10px] font-bold uppercase tracking-widest text-green-500 mb-1.5 px-1">
             Channels
           </p>
           <button
-            onClick={() => { setActiveView('group'); setSelectedUser(null); }}
+            onClick={selectGroup}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm
               transition-colors ${activeView === 'group'
                 ? 'bg-[#2d9e57] text-white'
@@ -439,7 +527,15 @@ export default function Chat() {
           >
             <Hash className="w-4 h-4 shrink-0" />
             <span className="font-medium">general</span>
-            <span className="ml-auto text-[10px] text-green-300">{allUsers.length + 1}</span>
+            {groupUnread > 0 && activeView !== 'group' ? (
+              <span className="ml-auto bg-green-400 text-[#0b2e1a] text-[10px] font-bold
+                               rounded-full min-w-[18px] h-[18px] flex items-center
+                               justify-center px-1 shrink-0">
+                {groupUnread > 99 ? '99+' : groupUnread}
+              </span>
+            ) : (
+              <span className="ml-auto text-[10px] text-green-300">{allUsers.length + 1}</span>
+            )}
           </button>
         </div>
 
@@ -462,7 +558,6 @@ export default function Chat() {
                     ? 'bg-[#2d9e57] text-white'
                     : 'text-green-100 hover:bg-white/10'}`}
               >
-                {/* Avatar */}
                 <div className="relative shrink-0">
                   <div className="w-8 h-8 rounded-full bg-green-800 flex items-center
                                   justify-center text-xs font-bold">
@@ -482,7 +577,7 @@ export default function Chat() {
                   </p>
                 </div>
                 {badge > 0 && !isActive && (
-                  <span className="bg-[#2d9e57] text-white text-[10px] font-bold rounded-full
+                  <span className="bg-green-400 text-[#0b2e1a] text-[10px] font-bold rounded-full
                                    min-w-[18px] h-[18px] flex items-center justify-center px-1 shrink-0">
                     {badge > 99 ? '99+' : badge}
                   </span>
@@ -517,7 +612,6 @@ export default function Chat() {
             <p className="text-[11px] text-gray-500 truncate">{chatSub}</p>
           </div>
 
-          {/* Call controls */}
           {activeView !== 'group' && selectedUser && callState === 'idle' && (
             <button
               onClick={() => startCall(selectedUser)}
@@ -583,6 +677,7 @@ export default function Chat() {
         {/* Input bar */}
         <div className="bg-[#f0f2f5] border-t border-gray-200 px-3 py-2.5
                         flex items-center gap-2 shrink-0">
+          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -590,49 +685,84 @@ export default function Chat() {
             accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.mp3,.wav"
             onChange={handleFileChange}
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            title="Attach file"
-            className="w-10 h-10 rounded-full text-gray-500 hover:bg-gray-200 flex items-center
-                       justify-center transition-colors shrink-0"
-          >
-            {uploading ? (
-              <svg className="animate-spin w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-            ) : (
-              <Paperclip className="w-5 h-5" />
-            )}
-          </button>
 
-          <input
-            type="text"
-            value={input}
-            onChange={e => { setInput(e.target.value); inputRef.current = e.target.value; }}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-            }}
-            placeholder={
-              activeView === 'group'
-                ? 'Message #general…'
-                : selectedUser ? `Message ${selectedUser.firstName}…` : 'Select a chat'
-            }
-            className="flex-1 bg-white rounded-full px-4 py-2 text-sm text-gray-800
-                       focus:outline-none border border-gray-200 focus:border-green-400 transition"
-          />
+          {/* Attach button — hidden while recording */}
+          {!isRecording && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              title="Attach file"
+              className="w-10 h-10 rounded-full text-gray-500 hover:bg-gray-200 flex items-center
+                         justify-center transition-colors shrink-0"
+            >
+              {uploading ? (
+                <svg className="animate-spin w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              ) : (
+                <Paperclip className="w-5 h-5" />
+              )}
+            </button>
+          )}
 
-          <button
-            onClick={() => sendMessage()}
-            disabled={!input.trim() && !uploading}
-            className="w-10 h-10 rounded-full bg-[#2d9e57] hover:bg-[#1a6b3a] text-white
-                       flex items-center justify-center transition-colors shrink-0
-                       disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+          {/* Recording indicator OR text input */}
+          {isRecording ? (
+            <div className="flex-1 flex items-center gap-3 bg-white rounded-full px-4 py-2
+                            border border-red-300">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+              <span className="text-red-500 text-sm font-medium tabular-nums">
+                {fmtTime(recordingTime)}
+              </span>
+              <span className="text-gray-400 text-sm flex-1">Recording voice note…</span>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={input}
+              onChange={e => { setInput(e.target.value); inputRef.current = e.target.value; }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+              }}
+              placeholder={
+                activeView === 'group'
+                  ? 'Message #general…'
+                  : selectedUser ? `Message ${selectedUser.firstName}…` : 'Select a chat'
+              }
+              className="flex-1 bg-white rounded-full px-4 py-2 text-sm text-gray-800
+                         focus:outline-none border border-gray-200 focus:border-green-400 transition"
+            />
+          )}
+
+          {/* Right action button: Stop (recording) | Send (has text) | Mic (idle/empty) */}
+          {isRecording ? (
+            <button
+              onClick={stopVoiceNote}
+              title="Stop and send voice note"
+              className="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white
+                         flex items-center justify-center transition-colors shrink-0"
+            >
+              <StopCircle className="w-5 h-5" />
+            </button>
+          ) : input.trim() ? (
+            <button
+              onClick={() => sendMessage()}
+              className="w-10 h-10 rounded-full bg-[#2d9e57] hover:bg-[#1a6b3a] text-white
+                         flex items-center justify-center transition-colors shrink-0"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={startVoiceNote}
+              title="Record voice note"
+              className="w-10 h-10 rounded-full bg-[#2d9e57] hover:bg-[#1a6b3a] text-white
+                         flex items-center justify-center transition-colors shrink-0"
+            >
+              <Mic className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </main>
 

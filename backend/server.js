@@ -69,8 +69,9 @@ app.post(
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const ext = path.extname(req.file.originalname).toLowerCase();
     let mediaType = 'document';
-    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext)) mediaType = 'image';
-    else if (['.mp4', '.webm', '.mov', '.avi', '.mkv'].includes(ext))      mediaType = 'video';
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext))           mediaType = 'image';
+    else if (['.mp4', '.mov', '.avi', '.mkv'].includes(ext))                        mediaType = 'video';
+    else if (['.mp3', '.wav', '.ogg', '.webm', '.m4a', '.aac', '.opus'].includes(ext)) mediaType = 'audio';
     res.json({
       url:       `/uploads/chat/${req.file.filename}`,
       mediaType,
