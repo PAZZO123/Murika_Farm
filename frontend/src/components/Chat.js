@@ -11,6 +11,21 @@ const getHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// Redirect to login on 401 (expired token)
+const apiFetch = async (url, options = {}) => {
+  const res = await fetch(url, {
+    ...options,
+    headers: { ...getHeaders(), ...(options.headers || {}) },
+  });
+  if (res.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+    window.location.href = '/login';
+    return null;
+  }
+  return res;
+};
+
 function initials(u) {
   return `${u?.firstName?.[0] || ''}${u?.lastName?.[0] || ''}`.toUpperCase() || '?';
 }
@@ -263,17 +278,17 @@ export default function Chat() {
 
   // ── Fetch all users ────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch(`${API}/api/auth/users`, { headers: getHeaders() })
-      .then(r => r.json())
-      .then(data => setAllUsers(data.filter(u => u._id !== currentUser._id)))
+    apiFetch(`${API}/api/auth/users`)
+      .then(r => r?.json())
+      .then(data => data && setAllUsers(data.filter(u => u._id !== currentUser._id)))
       .catch(console.error);
   }, [currentUser._id]);
 
   // ── Fetch group messages on mount ──────────────────────────────────────────
   useEffect(() => {
-    fetch(`${API}/api/group-messages`, { headers: getHeaders() })
-      .then(r => r.json())
-      .then(data => setGroupMessages(Array.isArray(data) ? data : []))
+    apiFetch(`${API}/api/group-messages`)
+      .then(r => r?.json())
+      .then(data => data && setGroupMessages(Array.isArray(data) ? data : []))
       .catch(console.error);
   }, []);
 
@@ -282,9 +297,9 @@ export default function Chat() {
     if (!selectedUser) return;
     const uid = String(selectedUser._id);
     if (privateMessages[uid]) return;
-    fetch(`${API}/api/messages/${uid}`, { headers: getHeaders() })
-      .then(r => r.json())
-      .then(data => setPrivateMessages(prev => ({ ...prev, [uid]: Array.isArray(data) ? data : [] })))
+    apiFetch(`${API}/api/messages/${uid}`)
+      .then(r => r?.json())
+      .then(data => data && setPrivateMessages(prev => ({ ...prev, [uid]: Array.isArray(data) ? data : [] })))
       .catch(console.error);
   }, [selectedUser]); // eslint-disable-line
 
@@ -300,17 +315,19 @@ export default function Chat() {
     const body = { content: content || '', ...(mediaData || {}) };
 
     if (activeView === 'group') {
-      await fetch(`${API}/api/group-messages`, {
+      await apiFetch(`${API}/api/group-messages`, {
         method:  'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(body),
       });
     } else if (selectedUser) {
-      const saved = await fetch(`${API}/api/messages`, {
+      const res  = await apiFetch(`${API}/api/messages`, {
         method:  'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ receiver: selectedUser._id, ...body }),
-      }).then(r => r.json());
+      });
+      if (!res) return;
+      const saved = await res.json();
 
       const enriched = {
         ...saved,
@@ -338,11 +355,9 @@ export default function Chat() {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const { url, mediaType, fileName } = await fetch(`${API}/api/chat/upload`, {
-        method:  'POST',
-        headers: getHeaders(),
-        body:    fd,
-      }).then(r => r.json());
+      const res = await apiFetch(`${API}/api/chat/upload`, { method: 'POST', body: fd });
+      if (!res) return;
+      const { url, mediaType, fileName } = await res.json();
       await sendMessage({ mediaUrl: url, mediaType, fileName });
     } catch (err) {
       console.error('Upload error:', err);
@@ -373,11 +388,9 @@ export default function Chat() {
         const fd   = new FormData();
         fd.append('file', file);
         try {
-          const { url, mediaType, fileName } = await fetch(`${API}/api/chat/upload`, {
-            method:  'POST',
-            headers: getHeaders(),
-            body:    fd,
-          }).then(r => r.json());
+          const res = await apiFetch(`${API}/api/chat/upload`, { method: 'POST', body: fd });
+          if (!res) return;
+          const { url, mediaType, fileName } = await res.json();
           await sendMessage({ mediaUrl: url, mediaType, fileName });
         } catch (err) {
           console.error('Voice note upload error:', err);
