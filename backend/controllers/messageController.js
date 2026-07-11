@@ -1,103 +1,96 @@
 const Message = require('../models/messageModel');
-const User = require('../models/userModel');
 
-// Get messages between two users
 exports.getMessages = async (req, res) => {
   const { receiverId } = req.params;
   const senderId = req.user._id;
-
   try {
     const messages = await Message.find({
       $or: [
-        { sender: senderId, receiver: receiverId },
-        { sender: receiverId, receiver: senderId }
-      ]
-    }).sort({ timestamp: 1 });
-
-    res.status(200).json(messages);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+        { sender: senderId,   receiver: receiverId },
+        { sender: receiverId, receiver: senderId   },
+      ],
+    })
+      .populate('sender', 'firstName lastName role')
+      .sort({ timestamp: 1 });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// Send a new message
 exports.sendMessage = async (req, res) => {
   const senderId = req.user._id;
-  const { receiver, content } = req.body;
-
+  const { receiver, content, mediaUrl, mediaType, fileName } = req.body;
   try {
-    const newMessage = new Message({
-      sender: senderId,
+    const msg = await Message.create({
+      sender:    senderId,
       receiver,
-      content
+      content:   content   || '',
+      mediaUrl:  mediaUrl  || null,
+      mediaType: mediaType || 'text',
+      fileName:  fileName  || null,
     });
+    await msg.populate('sender', 'firstName lastName role');
 
-    await newMessage.save();
-    res.status(201).json({ newMessage });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Push to receiver if they are online
+    const io          = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const receiverSocket = onlineUsers?.get(String(receiver));
+    if (receiverSocket) {
+      io.to(receiverSocket).emit('new-private-message', msg);
+    }
+
+    res.status(201).json(msg);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
+
 exports.getConversationsOverview = async (req, res) => {
   const currentUserId = req.user._id;
-
   try {
-      const conversations = await Message.aggregate([
-          {
-              $match: {
-                  $or: [
-                      { sender: currentUserId },
-                      { receiver: currentUserId }
-                  ]
-              }
+    const conversations = await Message.aggregate([
+      { $match: { $or: [{ sender: currentUserId }, { receiver: currentUserId }] } },
+      { $sort: { timestamp: -1 } },
+      {
+        $group: {
+          _id: {
+            $cond: {
+              if:   { $eq: ['$sender', currentUserId] },
+              then: '$receiver',
+              else: '$sender',
+            },
           },
-          {
-              $sort: { timestamp: -1 } // Sort by most recent message first
+          lastMessage:          { $first: '$content' },
+          lastMessageTimestamp: { $first: '$timestamp' },
+        },
+      },
+      {
+        $lookup: {
+          from:         'users',
+          localField:   '_id',
+          foreignField: '_id',
+          as:           'participant',
+        },
+      },
+      { $unwind: '$participant' },
+      {
+        $project: {
+          _id: 0,
+          user: {
+            _id:       '$participant._id',
+            firstName: '$participant.firstName',
+            lastName:  '$participant.lastName',
+            role:      '$participant.role',
           },
-          {
-              $group: {
-                  _id: {
-                      $cond: {
-                          if: { $eq: ["$sender", currentUserId] },
-                          then: "$receiver",
-                          else: "$sender"
-                      }
-                  },
-                  lastMessage: { $first: "$content" },
-                  lastMessageTimestamp: { $first: "$timestamp" }
-              }
-          },
-          {
-              $lookup: {
-                  from: 'users', // The collection name for your User model
-                  localField: '_id',
-                  foreignField: '_id',
-                  as: 'participant'
-              }
-          },
-          {
-              $unwind: '$participant'
-          },
-          {
-              $project: {
-                  _id: 0,
-                  user: {
-                      _id: "$participant._id",
-                      firstName: "$participant.firstName",
-                      lastName: "$participant.lastName",
-                      role: "$participant.role"
-                  },
-                  lastMessage: 1,
-                  lastMessageTimestamp: 1
-              }
-          },
-          {
-              $sort: { lastMessageTimestamp: -1 } // Sort conversations by the latest message globally
-          }
-      ]);
-
-      res.status(200).json(conversations);
-  } catch (error) {
-      res.status(500).json({ error: error.message });
+          lastMessage:          1,
+          lastMessageTimestamp: 1,
+        },
+      },
+      { $sort: { lastMessageTimestamp: -1 } },
+    ]);
+    res.json(conversations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

@@ -66,7 +66,7 @@ const DashboardLayout = () => {
         </div>
 
         {/* Content Outlet */}
-        <div className="flex-grow bg-white p-4 ml-60">
+        <div className="flex-grow bg-white p-4 ml-60 overflow-hidden flex flex-col">
           <Outlet />
         </div>
       </div>
