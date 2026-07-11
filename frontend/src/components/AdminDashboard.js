@@ -4,7 +4,6 @@ import { FaUsers, FaChartLine, FaProjectDiagram, FaBars, FaChartPie, FaBuilding,
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import html2canvas from 'html2canvas';
 import Logo from '../Assets/Logo.png';
 
 // --- Reusable Chart Component ---
@@ -182,75 +181,328 @@ const AdminDashboard = () => {
   }, [getHeaders]);
 
   const handleDownloadReport = async () => {
-    if (!dashboardRef.current) return;
-    
     const doc = new jsPDF('p', 'mm', 'a4');
-    const currentDate = new Date().toLocaleDateString();
-    
-    // Add header with logo and title
-    const addHeader = async () => {
-      try {
-        // Add logo
-        const img = new Image();
-        img.src = Logo;
-        await new Promise((resolve) => {
-          img.onload = () => {
-            doc.addImage(img, 'PNG', 14, 10, 30, 10);
-            resolve();
-          };
-        });
-        
-        // Add title and date
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Mulika MANAGEMENT SYSTEM', 50, 15);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Admin Dashboard Report', 50, 22);
-        doc.setFontSize(10);
-        doc.text(`Date: ${currentDate}`, 50, 28);
-        
-        // Add horizontal line
-        doc.setDrawColor(200, 200, 200);
-        doc.line(14, 32, 196, 32);
-      } catch (error) {
-        console.error("Error adding header:", error);
-      }
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const GREEN  = [26, 107, 58];
+    const GREEN2 = [45, 158, 87];
+    const WHITE  = [255, 255, 255];
+    const GREY   = [74, 74, 74];
+    const LIGHT  = [232, 245, 238];
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const fullName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Staff Member';
+    const role = currentUser.role
+      ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
+      : 'Internal Staff';
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    const fileName = `Murika_Report_${new Date().toISOString().slice(0,10)}.pdf`;
+
+    // ── helper: draw page chrome (header bar + footer bar + page number) ──
+    const drawChrome = (pageNum, totalPages) => {
+      // top green bar
+      doc.setFillColor(...GREEN);
+      doc.rect(0, 0, pageW, 14, 'F');
+      // bottom green bar
+      doc.setFillColor(...GREEN);
+      doc.rect(0, pageH - 10, pageW, 10, 'F');
+      // footer text
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...WHITE);
+      doc.text('Murika Farms — Confidential Business Report', 14, pageH - 3.5);
+      doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 14, pageH - 3.5, { align: 'right' });
     };
 
+    // ── PAGE 1 ────────────────────────────────────────────────────────────
+
+    // --- logo ---
     try {
-      await addHeader();
-      
-      // Capture dashboard content
-      const canvas = await html2canvas(dashboardRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false
+      await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          doc.addImage(img, 'PNG', pageW / 2 - 12, 16, 24, 24);
+          resolve();
+        };
+        img.onerror = resolve;
+        img.src = Logo;
       });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const imgProps = doc.getImageProperties(imgData);
-      const pdfWidth = doc.internal.pageSize.getWidth() - 20; // Margin
-      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      // Add content to PDF
-      doc.addImage(imgData, 'PNG', 10, 35, pdfWidth, imgHeight);
-      
-      // Add page numbers if content is too long
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(10);
-        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() / 2, 
-                doc.internal.pageSize.getHeight() - 10, { align: 'center' });
-      }
-      
-      // Save the PDF
-      doc.save(`admin_dashboard_report_${currentDate.replace(/\//g, '-')}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF report. Please try again.");
+    } catch (_) {}
+
+    // --- title ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(...GREEN);
+    doc.text('MURIKA FARMS', pageW / 2, 46, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GREY);
+    doc.text('Business Management System — Dashboard Report', pageW / 2, 53, { align: 'center' });
+
+    // green divider
+    doc.setDrawColor(...GREEN2);
+    doc.setLineWidth(0.8);
+    doc.line(14, 57, pageW - 14, 57);
+
+    // --- meta info table ---
+    doc.autoTable({
+      startY: 60,
+      margin: { left: 14, right: 14 },
+      theme: 'plain',
+      styles: { fontSize: 8.5, cellPadding: 3 },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: GREEN, cellWidth: 38 },
+        1: { textColor: GREY, cellWidth: 58 },
+        2: { fontStyle: 'bold', textColor: GREEN, cellWidth: 38 },
+        3: { textColor: GREY, cellWidth: 44 },
+      },
+      body: [
+        ['Report Date:', today,         'Prepared By:', fullName],
+        ['Position:',   role,           'Report Type:', 'Dashboard Summary'],
+        ['System:',     'Murika Farms', 'Status:',      'Generated'],
+      ],
+      didParseCell: (data) => {
+        data.cell.styles.fillColor = data.row.index % 2 === 0 ? LIGHT : WHITE;
+        data.cell.styles.lineColor = [197, 224, 207];
+        data.cell.styles.lineWidth = 0.2;
+      },
+    });
+
+    // --- Section 1: Key Metrics ---
+    let y = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GREEN);
+    doc.text('1.  Key Performance Metrics', 14, y);
+    doc.setDrawColor(...GREEN2);
+    doc.setLineWidth(0.5);
+    doc.line(14, y + 2, pageW - 14, y + 2);
+
+    doc.autoTable({
+      startY: y + 5,
+      margin: { left: 14, right: 14 },
+      head: [['Metric', 'Value']],
+      body: [
+        ['Total Users',         dashboardData.totalUsers.toString()],
+        ['Total Campaigns',     dashboardData.totalCampaigns.toString()],
+        ['Company Products',    dashboardData.totalCompanyProducts.toString()],
+        ['Supplier Products',   dashboardData.totalClientProducts.toString()],
+        ['Total Projects',      dashboardData.totalProjects.toString()],
+        ['Total Expenses',      `${dashboardData.totalExpenses.toLocaleString()} RWF`],
+      ],
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: LIGHT },
+      styles: { fontSize: 9, cellPadding: 4, textColor: GREY },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: GREEN },
+        1: { halign: 'right' },
+      },
+      tableLineColor: GREEN2,
+      tableLineWidth: 0.3,
+    });
+
+    // --- Section 2: User Roles ---
+    y = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GREEN);
+    doc.text('2.  User Roles Distribution', 14, y);
+    doc.setDrawColor(...GREEN2);
+    doc.line(14, y + 2, pageW - 14, y + 2);
+
+    doc.autoTable({
+      startY: y + 5,
+      margin: { left: 14, right: 14 },
+      head: [['Role', 'Count']],
+      body: dashboardData.userRoles.length > 0
+        ? dashboardData.userRoles.map(r => [r.name, r.value.toString()])
+        : [['No data', '—']],
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: LIGHT },
+      styles: { fontSize: 9, cellPadding: 4, textColor: GREY },
+      columnStyles: { 1: { halign: 'right' } },
+      tableLineColor: GREEN2,
+      tableLineWidth: 0.3,
+    });
+
+    // --- Section 3: Campaign Status ---
+    y = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GREEN);
+    doc.text('3.  Campaign Status', 14, y);
+    doc.setDrawColor(...GREEN2);
+    doc.line(14, y + 2, pageW - 14, y + 2);
+
+    doc.autoTable({
+      startY: y + 5,
+      margin: { left: 14, right: 14 },
+      head: [['Status', 'Count']],
+      body: dashboardData.campaignStatus.length > 0
+        ? dashboardData.campaignStatus.map(r => [r.name, r.value.toString()])
+        : [['No data', '—']],
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: LIGHT },
+      styles: { fontSize: 9, cellPadding: 4, textColor: GREY },
+      columnStyles: { 1: { halign: 'right' } },
+      tableLineColor: GREEN2,
+      tableLineWidth: 0.3,
+    });
+
+    // --- Section 4: Supplier Products ---
+    y = doc.lastAutoTable.finalY + 8;
+    // new page if needed
+    if (y > pageH - 80) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GREEN);
+    doc.text('4.  Supplier Product Status', 14, y);
+    doc.setDrawColor(...GREEN2);
+    doc.line(14, y + 2, pageW - 14, y + 2);
+
+    doc.autoTable({
+      startY: y + 5,
+      margin: { left: 14, right: 14 },
+      head: [['Status', 'Count']],
+      body: dashboardData.clientProductStatuses.length > 0
+        ? dashboardData.clientProductStatuses.map(r => [r.name, r.value.toString()])
+        : [['No data', '—']],
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: LIGHT },
+      styles: { fontSize: 9, cellPadding: 4, textColor: GREY },
+      columnStyles: { 1: { halign: 'right' } },
+      tableLineColor: GREEN2,
+      tableLineWidth: 0.3,
+    });
+
+    // --- Section 5: Payment Status ---
+    y = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GREEN);
+    doc.text('5.  Supplier Payment Status', 14, y);
+    doc.setDrawColor(...GREEN2);
+    doc.line(14, y + 2, pageW - 14, y + 2);
+
+    doc.autoTable({
+      startY: y + 5,
+      margin: { left: 14, right: 14 },
+      head: [['Payment Status', 'Count']],
+      body: dashboardData.clientPaymentStatuses.length > 0
+        ? dashboardData.clientPaymentStatuses.map(r => [r.name, r.value.toString()])
+        : [['No data', '—']],
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: LIGHT },
+      styles: { fontSize: 9, cellPadding: 4, textColor: GREY },
+      columnStyles: { 1: { halign: 'right' } },
+      tableLineColor: GREEN2,
+      tableLineWidth: 0.3,
+    });
+
+    // --- Section 6: Project Status ---
+    y = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GREEN);
+    doc.text('6.  Project Status', 14, y);
+    doc.setDrawColor(...GREEN2);
+    doc.line(14, y + 2, pageW - 14, y + 2);
+
+    doc.autoTable({
+      startY: y + 5,
+      margin: { left: 14, right: 14 },
+      head: [['Status', 'Count']],
+      body: dashboardData.projectStatus.length > 0
+        ? dashboardData.projectStatus.map(r => [r.name, r.value.toString()])
+        : [['No data', '—']],
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: LIGHT },
+      styles: { fontSize: 9, cellPadding: 4, textColor: GREY },
+      columnStyles: { 1: { halign: 'right' } },
+      tableLineColor: GREEN2,
+      tableLineWidth: 0.3,
+    });
+
+    // --- Section 7: Expense Categories ---
+    y = doc.lastAutoTable.finalY + 8;
+    if (y > pageH - 80) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...GREEN);
+    doc.text('7.  Expense Categories', 14, y);
+    doc.setDrawColor(...GREEN2);
+    doc.line(14, y + 2, pageW - 14, y + 2);
+
+    doc.autoTable({
+      startY: y + 5,
+      margin: { left: 14, right: 14 },
+      head: [['Category', 'Count']],
+      body: dashboardData.expenseCategories.length > 0
+        ? dashboardData.expenseCategories.map(r => [r.name, r.value.toString()])
+        : [['No data', '—']],
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: LIGHT },
+      styles: { fontSize: 9, cellPadding: 4, textColor: GREY },
+      columnStyles: { 1: { halign: 'right' } },
+      tableLineColor: GREEN2,
+      tableLineWidth: 0.3,
+    });
+
+    // ── SIGNATURE BLOCK ───────────────────────────────────────────────────
+    y = doc.lastAutoTable.finalY + 12;
+    if (y > pageH - 55) { doc.addPage(); y = 20; }
+
+    doc.setDrawColor(...GREEN2);
+    doc.setLineWidth(0.8);
+    doc.line(14, y, pageW - 14, y);
+    y += 8;
+
+    // Left — Prepared By
+    const leftX  = 30;
+    const rightX = pageW - 30;
+    const sigLineW = 55;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...GREEN);
+    doc.text('PREPARED BY', leftX, y, { align: 'center' });
+    doc.text('APPROVED BY', rightX, y, { align: 'center' });
+
+    y += 16;
+    // signature lines
+    doc.setDrawColor(...GREEN);
+    doc.setLineWidth(0.5);
+    doc.line(leftX  - sigLineW / 2, y, leftX  + sigLineW / 2, y);
+    doc.line(rightX - sigLineW / 2, y, rightX + sigLineW / 2, y);
+
+    y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...GREEN);
+    doc.text(fullName, leftX, y, { align: 'center' });
+    doc.text('..............................', rightX, y, { align: 'center' });
+
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...GREY);
+    doc.text(role, leftX, y, { align: 'center' });
+    doc.text('Project Manager / Supervisor', rightX, y, { align: 'center' });
+
+    y += 5;
+    doc.setFontSize(8);
+    doc.text(`Date: ${today}`, leftX, y, { align: 'center' });
+    doc.text(`Date: ${today}`, rightX, y, { align: 'center' });
+
+    // ── apply chrome to all pages ──────────────────────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      drawChrome(i, totalPages);
     }
+
+    doc.save(fileName);
   };
 
   if (loading) {
